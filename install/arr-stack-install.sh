@@ -60,6 +60,9 @@ cat <<EOF >/etc/systemd/system/sonarr.service
 Description=Sonarr Daemon
 After=syslog.target network.target
 [Service]
+User=root
+Group=root
+UMask=0000
 Type=simple
 ExecStart=/opt/Sonarr/Sonarr -nobrowser -data=/var/lib/sonarr/
 TimeoutStopSec=20
@@ -77,7 +80,9 @@ cat <<EOF >/etc/systemd/system/radarr.service
 Description=Radarr Daemon
 After=syslog.target network.target
 [Service]
-UMask=0002
+User=root
+Group=root
+UMask=0000
 Type=simple
 ExecStart=/opt/Radarr/Radarr -nobrowser -data=/var/lib/radarr/
 TimeoutStopSec=20
@@ -96,6 +101,9 @@ Description=Overseerr Service
 After=network.target
 
 [Service]
+User=root
+Group=root
+UMask=0000
 Type=exec
 WorkingDirectory=/opt/overseerr
 Environment=CONFIG_DIRECTORY=/var/lib/overseerr
