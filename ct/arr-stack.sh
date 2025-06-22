@@ -7,9 +7,9 @@ source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc
 
 APP="Arr-Stack"
 var_tags="${var_tags:-arr,media}"
-var_cpu="${var_cpu:-2}"
-var_ram="${var_ram:-2048}"
-var_disk="${var_disk:-4}"
+var_cpu="${var_cpu:-4}"
+var_ram="${var_ram:-4096}"
+var_disk="${var_disk:-16}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
