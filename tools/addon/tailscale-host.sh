@@ -1,9 +1,34 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
-# Author: tteck (tteckster)
+# Tailscale Host Addon for Proxmox VE
+#
+# USAGE:
+#   bash <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/tools/addon/tailscale-host.sh)
+#
+# OR:
+#   curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/tools/addon/tailscale-host.sh -o tailscale-host.sh
+#   chmod +x tailscale-host.sh
+#   ./tailscale-host.sh
+#
+# FEATURES:
+#   - Install Tailscale directly on Proxmox VE host
+#   - Configure as subnet router to access local network via Tailscale
+#   - Configure as exit node to route internet traffic through host
+#   - Auto-start service with systemd integration
+#   - Upgrade to latest Tailscale version
+#   - Complete uninstall with cleanup
+#   - Status checking and reconfiguration options
+#   - Interactive setup with optional auth key support
+#
+# REQUIREMENTS:
+#   - Proxmox VE 8.0 or higher
+#   - Internet connection for package installation
+#   - Tailscale account (free at https://tailscale.com)
+#
+# Copyright (c) 2025 Nafis Ahmed
+# Author: Nafis Ahmed (na-fis)
 # License: MIT
-# https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# https://github.com/na-fis/ProxmoxVE/raw/main/LICENSE
 
 function header_info {
   clear
