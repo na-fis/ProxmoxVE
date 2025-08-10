@@ -66,6 +66,7 @@ $STD apt-get install --no-install-recommends -y \
   mesa-vulkan-drivers \
   ocl-icd-libopencl1 \
   tini \
+  libaom-dev \
   zlib1g
 $STD apt-get install -y \
   libgdk-pixbuf-2.0-dev librsvg2-dev libtool
@@ -84,9 +85,16 @@ $STD apt-get update
 $STD apt-get install -y jellyfin-ffmpeg7
 ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/bin/ffmpeg
 ln -s /usr/lib/jellyfin-ffmpeg/ffprobe /usr/bin/ffprobe
+if [[ "$CTTYPE" == "0" ]]; then
+  chgrp video /dev/dri
+  chmod 755 /dev/dri
+  chmod 660 /dev/dri/*
+  $STD adduser "$(id -u -n)" video
+  $STD adduser "$(id -u -n)" render
+fi
 msg_ok "Dependencies Installed"
 
-read -r -p "Install OpenVINO dependencies for Intel HW-accelerated machine-learning? y/N " prompt
+read -r -p "${TAB3}Install OpenVINO dependencies for Intel HW-accelerated machine-learning? y/N " prompt
 if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
   msg_info "Installing OpenVINO dependencies"
   touch ~/.openvino
@@ -100,13 +108,6 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
   $STD popd
   rm -rf "$tmp_dir"
   dpkg -l | grep "intel-opencl-icd" | awk '{print $3}' >~/.intel_version
-  if [[ "$CTTYPE" == "0" ]]; then
-    chgrp video /dev/dri
-    chmod 755 /dev/dri
-    chmod 660 /dev/dri/*
-    $STD adduser "$(id -u -n)" video
-    $STD adduser "$(id -u -n)" render
-  fi
   msg_ok "Installed OpenVINO dependencies"
 fi
 
@@ -153,7 +154,6 @@ if [[ -f ~/.openvino ]]; then
 fi
 msg_ok "Packages from Testing Repo Installed"
 
-# Fix default DB collation issue after libc update
 $STD sudo -u postgres psql -c "ALTER DATABASE postgres REFRESH COLLATION VERSION;"
 $STD sudo -u postgres psql -c "ALTER DATABASE $DB_NAME REFRESH COLLATION VERSION;"
 
@@ -218,7 +218,7 @@ $STD cmake --preset=release-noplugins \
   -DWITH_LIBSHARPYUV=ON \
   -DWITH_LIBDE265=ON \
   -DWITH_AOM_DECODER=OFF \
-  -DWITH_AOM_ENCODER=OFF \
+  -DWITH_AOM_ENCODER=ON \
   -DWITH_X265=OFF \
   -DWITH_EXAMPLES=OFF \
   ..
@@ -282,7 +282,7 @@ GEO_DIR="${INSTALL_DIR}/geodata"
 mkdir -p "$INSTALL_DIR"
 mkdir -p {"${APP_DIR}","${UPLOAD_DIR}","${GEO_DIR}","${ML_DIR}","${INSTALL_DIR}"/cache}
 
-fetch_and_deploy_gh_release "immich" "immich-app/immich" "tarball" "latest" "$SRC_DIR"
+fetch_and_deploy_gh_release "immich" "immich-app/immich" "tarball" "v1.137.3" "$SRC_DIR"
 
 msg_info "Installing ${APPLICATION} (more patience please)"
 
@@ -291,6 +291,9 @@ $STD npm install -g node-gyp node-pre-gyp
 $STD npm ci
 $STD npm run build
 $STD npm prune --omit=dev --omit=optional
+cp -a {bin,dist,node_modules,resources,package*.json} "$APP_DIR"/
+cp package.json "$APP_DIR"/bin
+sed -i 's|^start|./start|' "$APP_DIR"/bin/immich-admin
 cd "$SRC_DIR"/open-api/typescript-sdk
 $STD npm ci
 $STD npm run build
@@ -298,10 +301,13 @@ cd "$SRC_DIR"/web
 $STD npm ci
 $STD npm run build
 cd "$SRC_DIR"
-cp -a server/{node_modules,dist,bin,resources,package.json,package-lock.json,start*.sh} "$APP_DIR"/
 cp -a web/build "$APP_DIR"/www
 cp LICENSE "$APP_DIR"
-msg_ok "Installed Immich Web Components"
+cd "$APP_DIR"
+export SHARP_FORCE_GLOBAL_LIBVIPS=true
+$STD npm install sharp
+rm -rf "$APP_DIR"/node_modules/@img/sharp-{libvips*,linuxmusl-x64}
+msg_ok "Installed Immich Server and Web Components"
 
 cd "$SRC_DIR"/machine-learning
 export VIRTUAL_ENV="${ML_DIR}/ml-venv"
@@ -324,15 +330,13 @@ fi
 ln -sf "$APP_DIR"/resources "$INSTALL_DIR"
 
 cd "$APP_DIR"
-grep -Rl /usr/src | xargs -n1 sed -i "s|\/usr/src|$INSTALL_DIR|g"
-grep -RlE "'/build'" | xargs -n1 sed -i "s|'/build'|'$APP_DIR'|g"
+grep -rl /usr/src | xargs -n1 sed -i "s|\/usr/src|$INSTALL_DIR|g"
+grep -rlE "'/build'" | xargs -n1 sed -i "s|'/build'|'$APP_DIR'|g"
 sed -i "s@\"/cache\"@\"$INSTALL_DIR/cache\"@g" "$ML_DIR"/immich_ml/config.py
 ln -s "$UPLOAD_DIR" "$APP_DIR"/upload
 ln -s "$UPLOAD_DIR" "$ML_DIR"/upload
 
 msg_info "Installing Immich CLI"
-$STD npm install --build-from-source sharp
-rm -rf "$APP_DIR"/node_modules/@img/sharp-{libvips*,linuxmusl-x64}
 $STD npm i -g @immich/cli
 msg_ok "Installed Immich CLI"
 
@@ -360,9 +364,8 @@ msg_ok "Installed ${APPLICATION}"
 
 msg_info "Creating user, env file, scripts & services"
 $STD useradd -U -s /usr/sbin/nologin -r -M -d "$INSTALL_DIR" immich
-if [[ -f ~/.openvino ]]; then
-  usermod -aG video,render immich
-fi
+usermod -aG video,render immich
+
 cat <<EOF >"${INSTALL_DIR}"/.env
 TZ=$(cat /etc/timezone)
 IMMICH_VERSION=release
@@ -392,7 +395,16 @@ set +a
 
 python3 -m immich_ml
 EOF
-chmod +x "$ML_DIR"/ml_start.sh
+cat <<EOF >"$APP_DIR"/bin/start.sh
+#!/usr/bin/env bash
+
+set -a
+. "$INSTALL_DIR"/.env
+set +a
+
+/usr/bin/node "$APP_DIR"/dist/main.js "\$@"
+EOF
+chmod +x "$ML_DIR"/ml_start.sh "$APP_DIR"/bin/start.sh
 cat <<EOF >/etc/systemd/system/"${APPLICATION}"-web.service
 [Unit]
 Description=${APPLICATION} Web Service

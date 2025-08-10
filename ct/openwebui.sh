@@ -33,6 +33,8 @@ function update_script() {
     OLLAMA_VERSION=$(ollama -v | awk '{print $NF}')
     RELEASE=$(curl -s https://api.github.com/repos/ollama/ollama/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4)}')
     if [ "$OLLAMA_VERSION" != "$RELEASE" ]; then
+      rm -rf /usr/lib/ollama
+      rm -rf /usr/bin/ollama
       curl -fsSLO https://ollama.com/download/ollama-linux-amd64.tgz
       tar -C /usr -xzf ollama-linux-amd64.tgz
       rm -rf ollama-linux-amd64.tgz
@@ -55,7 +57,7 @@ function update_script() {
     exit
   fi
   systemctl stop open-webui.service
-  $STD npm install
+  $STD npm install --force
   export NODE_OPTIONS="--max-old-space-size=3584"
   $STD npm run build
   cd ./backend
