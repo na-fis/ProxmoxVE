@@ -36,7 +36,7 @@ msg_info "Installing Radarr"
 temp_file="$(mktemp)"
 mkdir -p /var/lib/radarr/
 chmod 775 /var/lib/radarr/
-cd /var/lib/radarr/
+cd /var/lib/radarr/ || exit
 RELEASE=$(curl -fsSL https://api.github.com/repos/Radarr/Radarr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
 curl -fsSL "https://github.com/Radarr/Radarr/releases/download/v${RELEASE}/Radarr.master.${RELEASE}.linux-core-x64.tar.gz" -o "$temp_file"
 $STD tar -xvzf "$temp_file"
@@ -49,10 +49,13 @@ msg_info "Installing Overseerr (Patience)"
 mkdir -p /var/lib/overseerr/
 chmod 775 /var/lib/overseerr/
 fetch_and_deploy_gh_release "overseerr" "sct/overseerr"
-cd /opt/overseerr
+cd /opt/overseerr || exit
 $STD yarn install
 $STD yarn build
 msg_ok "Installed Overseerr"
+
+# shellcheck disable=SC1090
+source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
 
 msg_info "Creating Sonarr Service"
 cat <<EOF >/etc/systemd/system/sonarr.service
@@ -114,6 +117,8 @@ WantedBy=multi-user.target
 EOF
 systemctl enable -q --now overseerr.service
 msg_ok "Created Overseerr Service"
+
+# Agregarr service is created by its own install script
 
 motd_ssh
 customize

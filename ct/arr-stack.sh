@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
 source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/build.func)
 # Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
@@ -25,7 +26,7 @@ function update_script() {
     check_container_resources
     
     # Check if any of the applications are installed
-    if [[ ! -d /var/lib/sonarr/ ]] && [[ ! -d /var/lib/radarr/ ]] && [[ ! -d /var/lib/overseerr/ ]]; then
+    if [[ ! -d /var/lib/sonarr/ ]] && [[ ! -d /var/lib/radarr/ ]] && [[ ! -d /var/lib/overseerr/ ]] && [[ ! -d /var/lib/agregarr/ ]]; then
         msg_error "No ${APP} Installation Found!"
         exit
     fi
@@ -81,8 +82,8 @@ function update_script() {
             # Download and install new version
             rm -rf /opt/overseerr
             fetch_and_deploy_gh_release "overseerr" "sct/overseerr"
-            cd /opt/overseerr
-            $STD yarn install
+            cd /opt/overseerr || exit
+            $STD CYPRESS_INSTALL_BINARY=0 yarn install
             $STD yarn build
 
             # Save version
@@ -93,6 +94,22 @@ function update_script() {
         fi
 
         systemctl start overseerr.service
+    fi
+
+    # Update or Install Agregarr
+    if [[ -d /opt/agregarr ]]; then
+        msg_info "Updating Agregarr"
+        systemctl stop agregarr.service
+        cd /opt/agregarr || exit
+        git pull
+        $STD CYPRESS_INSTALL_BINARY=0 yarn install
+        $STD yarn build
+        systemctl start agregarr.service
+        msg_ok "Updated Agregarr"
+    else
+        msg_info "Installing Agregarr (New Component)"
+        # shellcheck disable=SC1090
+        source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
     fi
     
     exit
@@ -108,3 +125,4 @@ echo -e "${INFO}${YW} Access the applications using the following URLs:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Sonarr: http://${IP}:8989${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Radarr: http://${IP}:7878${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Overseerr: http://${IP}:5055${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}Agregarr: http://${IP}:7171${CL}"
