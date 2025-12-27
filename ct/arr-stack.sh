@@ -83,7 +83,7 @@ function update_script() {
             rm -rf /opt/overseerr
             fetch_and_deploy_gh_release "overseerr" "sct/overseerr"
             cd /opt/overseerr || exit
-            $STD CYPRESS_INSTALL_BINARY=0 yarn install
+            $STD env CYPRESS_INSTALL_BINARY=0 yarn install
             $STD yarn build
 
             # Save version
@@ -102,7 +102,7 @@ function update_script() {
         systemctl stop agregarr.service
         cd /opt/agregarr || exit
         git pull
-        $STD CYPRESS_INSTALL_BINARY=0 yarn install
+        $STD env CYPRESS_INSTALL_BINARY=0 yarn install
         $STD yarn build
         systemctl start agregarr.service
         msg_ok "Updated Agregarr"

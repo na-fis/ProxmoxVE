@@ -4,6 +4,13 @@
 # and the catch-up upgrade process.
 
 function install_agregarr() {
+    # Ensure Node.js and Yarn are installed
+    if ! command -v yarn &> /dev/null; then
+        msg_info "Installing Node.js and Yarn"
+        NODE_VERSION="22" NODE_MODULE="yarn@latest" setup_nodejs
+        msg_ok "Installed Node.js and Yarn"
+    fi
+
     msg_info "Installing Agregarr Dependencies"
     $STD apt-get update
     $STD apt-get install -y ffmpeg libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev unzip
@@ -50,7 +57,7 @@ function install_agregarr() {
     chmod 775 /var/lib/agregarr/
     git clone https://github.com/agregarr/agregarr.git /opt/agregarr
     cd /opt/agregarr || exit
-    $STD CYPRESS_INSTALL_BINARY=0 yarn install
+    $STD env CYPRESS_INSTALL_BINARY=0 yarn install
     $STD yarn build
     msg_ok "Built Agregarr"
 
