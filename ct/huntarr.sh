@@ -29,27 +29,25 @@ function update_script() {
     exit
   fi
 
-  setup_uv
-  RELEASE=$(curl -fsSL https://api.github.com/repos/plexguide/Huntarr.io/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
-  if [[ -f ~/.huntarr && "${RELEASE}" == "$(cat ~/.huntarr)" ]]; then
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
-    exit
+  PYTHON_VERSION="3.12" setup_uv
+
+  if check_for_gh_release "huntarr" "plexguide/Huntarr.io"; then
+    msg_info "Stopping Service"
+    systemctl stop huntarr
+    msg_ok "Stopped Service"
+
+    fetch_and_deploy_gh_release "huntarr" "plexguide/Huntarr.io"
+
+    msg_info "Updating Huntarr"
+    cd /opt/huntarr
+    $STD uv pip install -r requirements.txt --python /opt/huntarr/.venv/bin/python
+    msg_ok "Updated Huntarr"
+
+    msg_info "Starting Service"
+    systemctl start huntarr
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
-  msg_info "Stopping huntarr service"
-  systemctl stop huntarr
-  msg_ok "Stopped huntarr service"
-
-  fetch_and_deploy_gh_release "huntarr" "plexguide/Huntarr.io"
-  msg_info "Configuring $APP"
-  cd /opt/huntarr
-  $STD uv pip install -r requirements.txt --python /opt/huntarr/.venv/bin/python
-  msg_ok "Configured $APP"
-
-  msg_info "Starting $APP"
-  systemctl start huntarr
-  msg_ok "Started $APP"
-
-  msg_ok "Updated $APP to v${RELEASE}"
   exit
 }
 

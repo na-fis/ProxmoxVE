@@ -20,25 +20,31 @@ color
 catch_errors
 
 function update_script() {
-    header_info
-    check_container_storage
-    check_container_resources
-    if [[ ! -d /opt/zammad ]]; then
-        msg_error "No ${APP} Installation Found!"
-        exit
-    fi
-    msg_info "Stopping Service"
-    $STD systemctl stop zammad
-    msg_info "Updating ${APP}"
-    $STD apt-get update
-    $STD apt-mark hold zammad
-    $STD apt-get -y upgrade
-    $STD apt-mark unhold zammad
-    $STD apt-get -y upgrade
-    msg_info "Starting Service"
-    $STD systemctl start zammad
-    msg_ok "Updated ${APP} LXC"
+  header_info
+  check_container_storage
+  check_container_resources
+  if [[ ! -d /opt/zammad ]]; then
+    msg_error "No ${APP} Installation Found!"
     exit
+  fi
+
+  msg_info "Stopping Service"
+  systemctl stop zammad
+  msg_ok "Stopped Service"
+
+  msg_info "Updating Zammad"
+  $STD apt update
+  $STD apt-mark hold zammad
+  $STD apt upgrade -y
+  $STD apt-mark unhold zammad
+  $STD apt upgrade -y
+  msg_ok "Updated Zammad"
+
+  msg_info "Starting Service"
+  systemctl start zammad
+  msg_ok "Started Service"
+  msg_ok "Updated successfully!"
+  exit
 }
 
 start

@@ -31,7 +31,13 @@ function update_script() {
     msg_ok "Stopped EMQX"
 
     msg_info "Removing old EMQX"
-    $STD apt-get remove --purge -y emqx
+    if dpkg -l | grep -q "^ii\s\+emqx\s"; then
+      $STD apt-get remove --purge -y emqx
+    elif dpkg -l | grep -q "^ii\s\+emqx-enterprise\s"; then
+      $STD apt-get remove --purge -y emqx-enterprise
+    else
+      msg_ok "No old EMQX package found"
+    fi
     msg_ok "Removed old EMQX"
 
     msg_info "Downloading EMQX v${RELEASE}"
@@ -41,17 +47,14 @@ function update_script() {
 
     msg_info "Installing EMQX"
     $STD apt-get install -y "$DEB_FILE"
+    rm -f "$DEB_FILE"
+    echo "$RELEASE" >~/.emqx
     msg_ok "Installed EMQX v${RELEASE}"
 
     msg_info "Starting EMQX"
     systemctl start emqx
-    echo "$RELEASE" >~/.emqx
     msg_ok "Started EMQX"
-
-    msg_info "Cleaning Up"
-    rm -f "$DEB_FILE"
-    msg_ok "Cleanup Completed"
-    msg_ok "Update Successful"
+    msg_ok "Updated successfully!"
   else
     msg_ok "No update required. EMQX is already at v${RELEASE}"
   fi

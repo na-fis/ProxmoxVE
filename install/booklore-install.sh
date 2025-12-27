@@ -46,14 +46,16 @@ $STD npm run build --configuration=production
 msg_ok "Built Frontend"
 
 msg_info "Creating Environment"
-mkdir -p /opt/booklore_storage{/data,/books}
+mkdir -p /opt/booklore_storage{/data,/books,/bookdrop}
 cat <<EOF >/opt/booklore_storage/.env
 DATABASE_URL=jdbc:mariadb://localhost:3306/$DB_NAME
 DATABASE_USERNAME=$DB_USER
 DATABASE_PASSWORD=$DB_PASS
+BOOKLORE_PORT=6060 
 
 BOOKLORE_DATA_PATH=/opt/booklore_storage/data
 BOOKLORE_BOOKS_PATH=/opt/booklore_storage/books
+BOOKLORE_BOOKDROP_PATH=/opt/booklore_storage/bookdrop
 EOF
 msg_ok "Created Environment"
 
@@ -75,6 +77,8 @@ msg_info "Configure Nginx"
 rm -rf /usr/share/nginx/html
 ln -s /opt/booklore/booklore-ui/dist/booklore/browser /usr/share/nginx/html
 cp /opt/booklore/nginx.conf /etc/nginx/nginx.conf
+sed -i 's/listen \${BOOKLORE_PORT};/listen 6060;/' /etc/nginx/nginx.conf
+sed -i 's/listen \[::\]:${BOOKLORE_PORT};/listen [::]:6060;/' /etc/nginx/nginx.conf
 systemctl restart nginx
 msg_ok "Configured Nginx"
 
@@ -102,8 +106,4 @@ msg_ok "Created BookLore Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

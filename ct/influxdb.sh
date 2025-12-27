@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -23,14 +23,16 @@ function update_script() {
   header_info
   check_container_storage
   check_container_resources
-  if [[ ! -f /etc/apt/sources.list.d/influxdata.list ]]; then
+  if [[ ! -f /usr/bin/influxd ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  msg_info "Updating ${APP}"
-  $STD apt-get update
-  $STD apt-get -y upgrade
-  msg_ok "Updated Successfully"
+  
+  msg_info "Updating InfluxDB"
+  $STD apt update
+  $STD apt upgrade -y
+  msg_ok "Updated InfluxDB"
+  msg_ok "Updated successfully!"
   exit
 }
 

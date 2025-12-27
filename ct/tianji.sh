@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-4}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-12}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -26,14 +26,9 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  if ! command -v jq &>/dev/null; then
-    $STD apt-get install -y jq
-  fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/msgbyte/tianji/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-  if [[ "${RELEASE}" != "$(cat ~/.tianji 2>/dev/null)" ]] || [[ ! -f ~/.tianji ]]; then
-
-    setup_uv
+  setup_uv
+  if check_for_gh_release "tianji" "msgbyte/tianji"; then
     NODE_VERSION="22" NODE_MODULE="pnpm@$(curl -s https://raw.githubusercontent.com/msgbyte/tianji/master/package.json | jq -r '.packageManager | split("@")[1]')" setup_nodejs
 
     msg_info "Stopping Service"
@@ -47,7 +42,7 @@ function update_script() {
 
     fetch_and_deploy_gh_release "tianji" "msgbyte/tianji"
 
-    msg_info "Updating ${APP}"
+    msg_info "Updating Tianji"
     cd /opt/tianji
     export NODE_OPTIONS="--max_old_space_size=4096"
     $STD pnpm install --filter @tianji/client... --config.dedupe-peer-dependents=false --frozen-lockfile
@@ -59,25 +54,20 @@ function update_script() {
     mv /opt/.env /opt/tianji/src/server/.env
     cd src/server
     $STD pnpm db:migrate:apply
-    msg_ok "Updated ${APP}"
+    rm -rf /opt/tianji_bak
+    rm -rf /opt/tianji/src/client
+    rm -rf /opt/tianji/website
+    rm -rf /opt/tianji/reporter
+    msg_ok "Updated Tianji"
 
     msg_info "Updating AppRise"
     $STD uv pip install apprise cryptography --system
     msg_ok "Updated AppRise"
 
-    msg_info "Starting ${APP}"
+    msg_info "Starting Service"
     systemctl start tianji
-    msg_ok "Started ${APP}"
-
-    msg_info "Cleaning up"
-    rm -rf /opt/tianji_bak
-    rm -rf /opt/tianji/src/client
-    rm -rf /opt/tianji/website
-    rm -rf /opt/tianji/reporter
-    msg_ok "Cleaned"
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required.  ${APP} is already at v${RELEASE}."
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

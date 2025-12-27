@@ -14,8 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get update
-$STD apt-get install -y git \
+$STD apt install -y git \
   build-essential \
   pkgconf \
   libssl-dev \
@@ -38,7 +37,7 @@ msg_ok "Installed Rust"
 
 msg_info "Building Vaultwarden ${VAULT} (Patience)"
 $STD git clone https://github.com/dani-garcia/vaultwarden
-cd vaultwarden
+cd vaultwarden || exit
 $STD cargo build --features "sqlite,mysql,postgresql" --release
 msg_ok "Built Vaultwarden ${VAULT}"
 
@@ -108,8 +107,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

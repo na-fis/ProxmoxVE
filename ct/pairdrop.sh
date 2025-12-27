@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-512}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -20,36 +20,31 @@ color
 catch_errors
 
 function update_script() {
-    header_info
-    check_container_storage
-    check_container_resources
-    if [[ ! -d /opt/pairdrop ]]; then
-        msg_error "No ${APP} Installation Found!"
-        exit
-    fi
-
-    RELEASE=$(curl -fsSL https://api.github.com/repos/schlagmichdoch/PairDrop/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-    if [[ ! -f ~/.pairdrop ]] || [[ "${RELEASE}" != "$(cat ~/.pairdrop)" ]]; then
-      msg_info "Stopping ${APP}"
-      systemctl stop pairdrop
-      msg_ok "Stopped ${APP}"
-      
-      fetch_and_deploy_gh_release "pairdrop" "schlagmichdoch/PairDrop" "tarball"
-
-      msg_info "Configuring PairDrop"
-      cd /opt/pairdrop
-      $STD npm install
-      msg_ok "Configured PairDrop"
-
-      msg_info "Starting ${APP}"
-      systemctl start pairdrop
-      msg_ok "Started ${APP}"
-
-      msg_ok "Updated Successfully"
-    else
-      msg_ok "No update required. ${APP} is already at ${RELEASE}."
-    fi
+  header_info
+  check_container_storage
+  check_container_resources
+  if [[ ! -d /opt/pairdrop ]]; then
+    msg_error "No ${APP} Installation Found!"
     exit
+  fi
+  if check_for_gh_release "pairdrop" "schlagmichdoch/PairDrop"; then
+    msg_info "Stopping Service"
+    systemctl stop pairdrop
+    msg_ok "Stopped Service"
+
+    fetch_and_deploy_gh_release "pairdrop" "schlagmichdoch/PairDrop" "tarball"
+
+    msg_info "Configuring PairDrop"
+    cd /opt/pairdrop
+    $STD npm install
+    msg_ok "Configured PairDrop"
+
+    msg_info "Starting Service"
+    systemctl start pairdrop
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
+  fi
+  exit
 }
 
 start

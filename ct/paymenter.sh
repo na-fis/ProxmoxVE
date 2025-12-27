@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-5}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,6 +27,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
+  setup_mariadb
 
   CURRENT_PHP=$(php -v 2>/dev/null | awk '/^PHP/{print $2}' | cut -d. -f1,2)
   if [[ "$CURRENT_PHP" != "8.3" ]]; then
@@ -36,15 +37,12 @@ function update_script() {
     $STD systemctl reload nginx
   fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/paymenter/paymenter/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ ! -f ~/.paymenter ]] || [[ "${RELEASE}" != "$(cat ~/.paymenter)" ]]; then
-    msg_info "Updating ${APP} to ${RELEASE}"
+  if check_for_gh_release "paymenter" "paymenter/paymenter"; then
+    msg_info "Updating ${APP}"
     cd /opt/paymenter
-    $STD php artisan p:upgrade --no-interaction
-    echo "${RELEASE}" >~/.paymenter
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}."
+    $STD php artisan app:upgrade --no-interaction
+    echo "${CHECK_UPDATE_RELEASE}" >~/.paymenter
+    msg_ok "Updated successfully!"
   fi
   exit
 }

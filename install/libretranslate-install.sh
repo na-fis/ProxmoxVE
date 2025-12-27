@@ -12,33 +12,43 @@ catch_errors
 setting_up_container
 network_check
 update_os
+setup_hwaccel
 
 msg_info "Installing dependencies"
-$STD apt-get install -y --no-install-recommends \
+$STD apt install -y \
   pkg-config \
-  gcc \
+  build-essential \
   g++ \
+  cmake \
+  libprotobuf-dev \
+  protobuf-compiler \
+  libsentencepiece-dev \
   libicu-dev
 msg_ok "Installed dependencies"
 
 msg_info "Setup Python3"
-$STD apt-get install -y \
+$STD apt install -y \
   python3-pip \
   python3-dev \
   python3-icu
 msg_ok "Setup Python3"
 
-setup_uv
+PYTHON_VERSION="3.12" setup_uv
 fetch_and_deploy_gh_release "libretranslate" "LibreTranslate/LibreTranslate"
 
 msg_info "Setup LibreTranslate (Patience)"
+TORCH_VERSION=$(grep -Eo '"torch ==[0-9]+\.[0-9]+\.[0-9]+' /opt/libretranslate/pyproject.toml |
+  tail -n1 | sed 's/.*==//')
+if [[ -z "$TORCH_VERSION" ]]; then
+  TORCH_VERSION="2.5.0"
+fi
 cd /opt/libretranslate
-$STD uv venv .venv
+$STD uv venv .venv --python 3.12
 $STD source .venv/bin/activate
 $STD uv pip install --upgrade pip setuptools
 $STD uv pip install Babel==2.12.1
 $STD .venv/bin/python scripts/compile_locales.py
-$STD uv pip install torch==2.2.0 --extra-index-url https://download.pytorch.org/whl/cpu
+$STD uv pip install "torch==${TORCH_VERSION}" --extra-index-url https://download.pytorch.org/whl/cpu
 $STD uv pip install "numpy<2"
 $STD uv pip install .
 $STD uv pip install libretranslate
@@ -74,8 +84,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

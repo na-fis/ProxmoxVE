@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y sqlite3
+$STD apt install -y sqlite3
 msg_ok "Installed Dependencies"
 
 msg_info "Installing Sonarr v4"
@@ -24,7 +24,6 @@ curl -fsSL "https://services.sonarr.tv/v1/download/main/latest?version=4&os=linu
 tar -xzf SonarrV4.tar.gz
 mv Sonarr /opt
 rm -rf SonarrV4.tar.gz
-
 msg_ok "Installed Sonarr v4"
 
 msg_info "Creating Service"
@@ -32,12 +31,14 @@ cat <<EOF >/etc/systemd/system/sonarr.service
 [Unit]
 Description=Sonarr Daemon
 After=syslog.target network.target
+
 [Service]
 Type=simple
 ExecStart=/opt/Sonarr/Sonarr -nobrowser -data=/var/lib/sonarr/
 TimeoutStopSec=20
 KillMode=process
 Restart=on-failure
+
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -46,8 +47,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

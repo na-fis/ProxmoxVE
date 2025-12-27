@@ -13,6 +13,7 @@ var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-0}"
+var_gpu="${var_gpu:-yes}"
 
 header_info "$APP"
 variables
@@ -28,9 +29,10 @@ function update_script() {
     exit
   fi
   msg_info "Updating $APP LXC"
-  $STD apt-get update
-  $STD apt-get -y upgrade
+  $STD apt update
+  $STD apt -y upgrade
   msg_ok "Updated $APP LXC"
+  msg_ok "Updated successfully!"
   exit
 }
 

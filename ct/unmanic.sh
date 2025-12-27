@@ -11,8 +11,9 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-0}"
+var_gpu="${var_gpu:-yes}"
 
 header_info "$APP"
 variables
@@ -29,8 +30,9 @@ function update_script() {
   fi
   msg_info "Updating $APP LXC"
   $STD pip3 install -U unmanic
-  $STD apt-get -y upgrade
+  $STD apt -y upgrade
   msg_ok "Updated $APP LXC"
+  msg_ok "Updated successfully!"
   exit
 }
 

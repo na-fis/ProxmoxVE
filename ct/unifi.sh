@@ -6,7 +6,7 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 # Source: https://ui.com/download/unifi
 
 APP="Unifi"
-var_tags="${var_tags:-network;controller;unifi}"
+var_tags="${var_tags:-network;unifi}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-8}"
@@ -20,18 +20,21 @@ color
 catch_errors
 
 function update_script() {
-    header_info
-    check_container_storage
-    check_container_resources
-    if [[ ! -d /usr/lib/unifi ]]; then
-        msg_error "No ${APP} Installation Found!"
-        exit
-    fi
-    msg_info "Updating ${APP}"
-    $STD apt-get update --allow-releaseinfo-change
-    $STD apt-get install -y unifi
-    msg_ok "Updated Successfully"
+  header_info
+  check_container_storage
+  check_container_resources
+  if [[ ! -d /usr/lib/unifi ]]; then
+    msg_error "No ${APP} Installation Found!"
     exit
+  fi
+
+  JAVA_VERSION="21" setup_java
+
+  msg_info "Updating ${APP}"
+  $STD apt update --allow-releaseinfo-change
+  $STD apt install -y unifi
+  msg_ok "Updated successfully!"
+  exit
 }
 
 start

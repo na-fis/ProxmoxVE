@@ -28,11 +28,10 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/cryptpad/cryptpad/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3) }')
-  if [[ "${RELEASE}" != "$(cat ~/.cryptpad 2>/dev/null)" ]] || [[ ! -f ~/.cryptpad ]]; then
-    msg_info "Stopping $APP"
+  if check_for_gh_release "cryptpad" "cryptpad/cryptpad"; then
+    msg_info "Stopping Service"
     systemctl stop cryptpad
-    msg_ok "Stopped $APP"
+    msg_info "Stopped Service"
 
     msg_info "Backing up configuration"
     [ -f /opt/cryptpad/config/config.js ] && mv /opt/cryptpad/config/config.js /opt/
@@ -40,24 +39,21 @@ function update_script() {
 
     fetch_and_deploy_gh_release "cryptpad" "cryptpad/cryptpad"
 
-    msg_info "Updating $APP to ${RELEASE}"
+    msg_info "Updating $APP"
     cd /opt/cryptpad
     $STD npm ci
     $STD npm run install:components
     $STD npm run build
-    msg_ok "Updated $APP to ${RELEASE}"
+    msg_ok "Updated $APP"
 
     msg_info "Restoring configuration"
     mv /opt/config.js /opt/cryptpad/config/
     msg_ok "Configuration restored"
 
-    msg_info "Starting $APP"
+    msg_info "Starting Service"
     systemctl start cryptpad
-    msg_ok "Started $APP"
-
-    msg_ok "Update Successful"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

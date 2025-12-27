@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,30 +27,29 @@ function update_script() {
     exit
   fi
   if [[ -x /opt/homebox ]]; then
-    sed -i 's|/opt\b|/opt/homebox|g' /etc/systemd/system/homebox.service
-    sed -i 's|^ExecStart=/opt/homebox$|ExecStart=/opt/homebox/homebox|' /etc/systemd/system/homebox.service
+    sed -i 's|WorkingDirectory=/opt$|WorkingDirectory=/opt/homebox|' /etc/systemd/system/homebox.service
+    sed -i 's|ExecStart=/opt/homebox$|ExecStart=/opt/homebox/homebox|' /etc/systemd/system/homebox.service
+    sed -i 's|EnvironmentFile=/opt/.env$|EnvironmentFile=/opt/homebox/.env|' /etc/systemd/system/homebox.service
     systemctl daemon-reload
   fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/sysadminsmedia/homebox/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.homebox 2>/dev/null)" ]] || [[ ! -f ~/.homebox ]]; then
-    msg_info "Stopping ${APP}"
+  if check_for_gh_release "homebox" "sysadminsmedia/homebox"; then
+    msg_info "Stopping Service"
     systemctl stop homebox
-    msg_ok "${APP} Stopped"
+    msg_ok "Stopped Service"
 
-    [ -x /opt/homebox ] && rm -f /opt/homebox
+    if [ -f /opt/homebox ] && [ -x /opt/homebox ]; then
+      rm -f /opt/homebox
+    fi
     fetch_and_deploy_gh_release "homebox" "sysadminsmedia/homebox" "prebuild" "latest" "/opt/homebox" "homebox_Linux_x86_64.tar.gz"
     chmod +x /opt/homebox/homebox
     [ -f /opt/.env ] && mv /opt/.env /opt/homebox/.env
     [ -d /opt/.data ] && mv /opt/.data /opt/homebox/.data
 
-    msg_info "Starting ${APP}"
+    msg_info "Starting Service"
     systemctl start homebox
-    msg_ok "Started ${APP}"
-
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

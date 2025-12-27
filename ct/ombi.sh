@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,12 +27,10 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-
-  RELEASE=$(curl -fsSL https://api.github.com/repos/Ombi-app/Ombi/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.ombi)" ]] || [[ ! -f ~/.ombi ]]; then
-    msg_info "Stopping ${APP} service"
+  if check_for_gh_release "ombi" "Ombi-app/Ombi"; then
+    msg_info "Stopping Service"
     systemctl stop ombi
-    msg_ok "Stopped ${APP} service"
+    msg_ok "Stopped Service"
 
     msg_info "Creating backup"
     [[ -f /opt/ombi/Ombi.db ]] && mv /opt/ombi/Ombi.db /opt
@@ -46,13 +44,10 @@ function update_script() {
     [[ -f /opt/OmbiExternal.db ]] && mv /opt/OmbiExternal.db /opt/ombi
     [[ -f /opt/OmbiSettings.db ]] && mv /opt/OmbiSettings.db /opt/ombi
 
-    msg_info "Starting ${APP} service"
+    msg_info "Starting Service"
     systemctl start ombi
-    msg_ok "Started ${APP} service"
-
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required.  ${APP} ia already at ${RELEASE}."
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

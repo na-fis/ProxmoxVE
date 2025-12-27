@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-512}"
 var_disk="${var_disk:-3}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,12 +27,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  if ! command -v jq &>/dev/null; then
-    $STD apt-get install -y jq
-  fi
-
-  RELEASE=$(curl -fsSL https://api.github.com/repos/MagicMirrorOrg/MagicMirror/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-  if [[ ! -f ~/.magicmirror ]] || [[ "${RELEASE}" != "$(cat ~/.magicmirror)" ]]; then
+  if check_for_gh_release "magicmirror" "MagicMirrorOrg/MagicMirror"; then
     msg_info "Stopping Service"
     systemctl stop magicmirror
     msg_ok "Stopped Service"
@@ -62,10 +57,7 @@ function update_script() {
     msg_info "Starting Service"
     systemctl start magicmirror
     msg_ok "Started Service"
-
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}."
+    msg_ok "Updated successfully!"
   fi
   exit
 }

@@ -6,12 +6,12 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 # Source: https://github.com/Kometa-Team/Kometa
 
 APP="Kometa"
-TAGS="media;streaming"
+var_tags="${var_tags:-media;streaming}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -28,12 +28,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  if ! command -v jq &>/dev/null; then
-    $STD apt-get install -y jq
-  fi
-
-  RELEASE=$(curl -fsSL https://api.github.com/repos/Kometa-Team/Kometa/releases/latest | jq -r '.tag_name | sub("^v";"")')
-  if [[ "${RELEASE}" != "$(cat ~/.kometa 2>/dev/null)" ]] || [[ ! -f ~/.kometa ]]; then
+  if check_for_gh_release "kometa" "Kometa-Team/Kometa"; then
     msg_info "Stopping Service"
     systemctl stop kometa
     msg_ok "Stopped Service"
@@ -42,11 +37,11 @@ function update_script() {
     cp /opt/kometa/config/config.yml /opt
     msg_ok "Backup completed"
 
-    PYTHON_VERSION="3.12" setup_uv
-    $STD uv python update-shell
+    PYTHON_VERSION="3.13" setup_uv
     fetch_and_deploy_gh_release "kometa" "Kometa-Team/Kometa"
 
     msg_info "Updating Kometa"
+    cd /opt/kometa
     $STD uv pip install -r requirements.txt --system
     mkdir -p config/assets
     cp /opt/config.yml config/config.yml
@@ -55,9 +50,7 @@ function update_script() {
     msg_info "Starting Service"
     systemctl start kometa
     msg_ok "Started Service"
-    msg_ok "Update Successful"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "Updated Successfully!"
   fi
   exit
 }

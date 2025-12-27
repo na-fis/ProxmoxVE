@@ -19,7 +19,7 @@ curl -L -o "${APPLICATION}" "https://github.com/heiher/${APPLICATION}/releases/d
 mv ${APPLICATION} /opt/${APPLICATION}
 chmod +x /opt/${APPLICATION}
 echo "${RELEASE}" >/opt/${APPLICATION}_version.txt
-curl -L -o "main.yml" "https://raw.githubusercontent.com/heiher/${APPLICATION}/refs/heads/master/conf/main.yml"
+curl -L -o "main.yml" "https://raw.githubusercontent.com/heiher/${APPLICATION}/refs/heads/main/conf/main.yml"
 sed -i 's/^#auth:/auth:/; s/^#  file: conf\/auth.txt/  file: \/root\/hev.creds/' main.yml
 mkdir -p /etc/${APPLICATION}
 USERNAME="admin"
@@ -47,8 +47,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

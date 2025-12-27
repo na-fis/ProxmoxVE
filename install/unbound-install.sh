@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Unbound"
-$STD apt-get install -y \
+$STD apt install -y \
   unbound \
   unbound-host
 msg_info "Installed Unbound"
@@ -80,8 +80,4 @@ msg_ok "Configured Logrotate"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

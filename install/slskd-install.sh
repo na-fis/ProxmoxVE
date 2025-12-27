@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   python3-pip
 msg_ok "Installed Dependencies"
 
@@ -108,14 +108,10 @@ WantedBy=multi-user.target
 EOF
 systemctl enable -q --now ${APPLICATION}
 systemctl enable -q soularr.timer
+rm -rf $tmp_file
+rm -rf /tmp/main.zip
 msg_ok "Created Services"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-rm -rf $tmp_file
-rm -rf /tmp/main.zip
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

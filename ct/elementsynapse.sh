@@ -9,7 +9,7 @@ APP="Element Synapse"
 var_tags="${var_tags:-server}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-2048}"
-var_disk="${var_disk:-4}"
+var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
@@ -61,8 +61,8 @@ function update_script() {
       $STD yarn global add serve
       $STD yarn install --ignore-engines
       $STD yarn build
-      mv ./dist ../ && \
-        rm -rf * && \
+      mv ./dist ../ &&
+        rm -rf * &&
         mv ../dist ./
       if [[ -z $(grep "ExecStart=/usr/local/bin/serve" /etc/systemd/system/synapse-admin.service) ]]; then
         sed -i 's|^ExecStart=.*|ExecStart=/usr/local/bin/serve -s dist -l 5173|' /etc/systemd/system/synapse-admin.service
@@ -71,7 +71,7 @@ function update_script() {
       systemctl start synapse-admin
       echo "${RELEASE}" >/opt/"${APP}"_version.txt
       rm -f "$temp_file"
-      msg_ok "Update Successful"
+      msg_ok "Updated successfully!"
     else
       msg_ok "No update required. ${APP} is already at v${RELEASE}"
     fi

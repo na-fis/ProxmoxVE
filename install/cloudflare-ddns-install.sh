@@ -41,7 +41,7 @@ while true; do
   read -rp "${TAB3}Enable IPv6 support? (y/n): " answer
   case "$answer" in
   [Yy]*)
-    var_cf_ip6_provider="auto"
+    var_cf_ip6_provider="cloudflare.trace"
     break
     ;;
   [Nn]*)
@@ -79,8 +79,4 @@ msg_ok "Setup Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

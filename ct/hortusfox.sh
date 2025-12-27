@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-5}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,8 +27,8 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/danielbrendel/hortusfox-web/releases/latest | jq -r .tag_name | sed 's/^v//')
-  if [[ ! -f ~/.hortusfox ]] || [[ "${RELEASE}" != "$(cat ~/.hortusfox)" ]]; then
+  setup_mariadb
+  if check_for_gh_release "hortusfox" "danielbrendel/hortusfox-web"; then
     msg_info "Stopping Service"
     systemctl stop apache2
     msg_ok "Stopped Service"
@@ -47,18 +47,14 @@ function update_script() {
     $STD php asatru migrate --no-interaction
     $STD php asatru plants:attributes
     $STD php asatru calendar:classes
+    chown -R www-data:www-data /opt/hortusfox
+    rm -r /opt/hortusfox-backup
     msg_ok "Updated HortusFox"
 
     msg_info "Starting Service"
     systemctl start apache2
     msg_ok "Started Service"
-
-    msg_info "Cleaning up"
-    rm -r /opt/hortusfox-backup
-    msg_ok "Cleaned"
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

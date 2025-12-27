@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-512}"
 var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,25 +27,20 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-
-  RELEASE=$(curl -s https://api.github.com/repos/pocketbase/pocketbase/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.pocketbase 2>/dev/null)" ]] || [[ ! -f ~/.pocketbase ]]; then
-    msg_info "Stopping ${APP}"
+  if check_for_gh_release "pocketbase" "pocketbase/pocketbase"; then
+    msg_info "Stopping Service"
     systemctl stop pocketbase
-    msg_ok "Stopped ${APP}"
+    msg_ok "Stopped Service"
 
     msg_info "Updating ${APP}"
     /opt/pocketbase/pocketbase update
-    echo "${RELEASE}" > ~/.pocketbase
+    echo "${CHECK_UPDATE_RELEASE}" >~/.pocketbase
     msg_ok "Updated ${APP}"
 
-    msg_info "Starting ${APP}"
+    msg_info "Starting Service"
     systemctl start pocketbase
-    msg_ok "Started ${APP}"
-    
-    msg_ok "Update Successful"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

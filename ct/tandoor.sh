@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-4}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-10}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -33,30 +33,29 @@ function update_script() {
     exit
   fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/TandoorRecipes/recipes/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-  if [[ "${RELEASE}" != "$(cat ~/.tandoor 2>/dev/null)" ]] || [[ ! -f ~/.tandoor ]]; then
-    msg_info "Stopping $APP"
+  if check_for_gh_release "tandoor" "TandoorRecipes/recipes"; then
+    msg_info "Stopping Service"
     systemctl stop tandoor
-    msg_ok "Stopped $APP"
+    msg_ok "Stopped Service"
 
     msg_info "Creating Backup"
     mv /opt/tandoor /opt/tandoor.bak
     msg_ok "Backup Created"
 
-    NODE_VERSION="20" NODE_MODULE="yarn" setup_nodejs
+    NODE_VERSION="22" NODE_MODULE="yarn" setup_nodejs
     PYTHON_VERSION="3.13" setup_uv
     fetch_and_deploy_gh_release "tandoor" "TandoorRecipes/recipes" "tarball" "latest" "/opt/tandoor"
 
-    msg_info "Updating $APP to ${RELEASE}"
+    msg_info "Updating Tandoor"
     cp -r /opt/tandoor.bak/{config,api,mediafiles,staticfiles} /opt/tandoor/
-    mv /opt/.env /opt/tandoor/.env
+    mv /opt/tandoor.bak/.env /opt/tandoor/.env
     cd /opt/tandoor
     $STD uv venv .venv --python=python3
     $STD uv pip install -r requirements.txt --python .venv/bin/python
     cd /opt/tandoor/vue3
     $STD yarn install
     $STD yarn build
-    TANDOOR_VERSION="$(curl -fsSL https://api.github.com/repos/TandoorRecipes/recipes/releases/latest | jq -r .tag_name)"
+    TANDOOR_VERSION=$(get_latest_github_release "TandoorRecipes/recipes")
     cat <<EOF >/opt/tandoor/cookbook/version_info.py
 TANDOOR_VERSION = "$TANDOOR_VERSION"
 TANDOOR_REF = "bare-metal"
@@ -65,19 +64,14 @@ EOF
     cd /opt/tandoor
     $STD /opt/tandoor/.venv/bin/python manage.py migrate
     $STD /opt/tandoor/.venv/bin/python manage.py collectstatic --no-input
-    msg_ok "Updated $APP to ${RELEASE}"
+    rm -rf /opt/tandoor.bak
+    msg_ok "Updated Tandoor"
 
-    msg_info "Starting $APP"
+    msg_info "Starting Service"
     systemctl start tandoor
     systemctl reload nginx
-    msg_ok "Started $APP"
-
-    msg_info "Cleaning Up"
-    rm -rf /opt/tandoor.bak
-    msg_ok "Cleanup Completed"
-    msg_ok "Update Successful"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

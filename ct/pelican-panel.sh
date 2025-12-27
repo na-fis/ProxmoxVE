@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,6 +27,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
+  setup_mariadb
   CURRENT_PHP=$(php -v 2>/dev/null | awk '/^PHP/{print $2}' | cut -d. -f1,2)
 
   if [[ "$CURRENT_PHP" != "8.4" ]]; then
@@ -34,9 +35,9 @@ function update_script() {
     $STD curl -fsSLo /tmp/debsuryorg-archive-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
     $STD dpkg -i /tmp/debsuryorg-archive-keyring.deb
     $STD sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
-    $STD apt-get update
-    $STD apt-get remove -y php"${CURRENT_PHP//./}"*
-    $STD apt-get install -y \
+    $STD apt update
+    $STD apt remove -y php"${CURRENT_PHP//./}"*
+    $STD apt install -y \
       php8.4 \
       php8.4-{gd,mysql,mbstring,bcmath,xml,curl,zip,intl,fpm} \
       libapache2-mod-php8.4
@@ -52,7 +53,7 @@ function update_script() {
 
     msg_info "Updating ${APP} to v${RELEASE}"
     cp -r /opt/pelican-panel/.env /opt/
-    SQLITE_INSTALL=$(ls /opt/pelican-panel/database/*.sqlite 1> /dev/null 2>&1 && echo "true" || echo "false")
+    SQLITE_INSTALL=$(ls /opt/pelican-panel/database/*.sqlite 1>/dev/null 2>&1 && echo "true" || echo "false")
     $SQLITE_INSTALL && cp -r /opt/pelican-panel/database/*.sqlite /opt/
     rm -rf * .*
     curl -fsSL "https://github.com/pelican-dev/panel/releases/download/v${RELEASE}/panel.tar.gz" -o $(basename "https://github.com/pelican-dev/panel/releases/download/v${RELEASE}/panel.tar.gz")
@@ -67,6 +68,7 @@ function update_script() {
     $STD php artisan migrate --seed --force
     chown -R www-data:www-data /opt/pelican-panel
     chmod -R 755 /opt/pelican-panel/storage /opt/pelican-panel/bootstrap/cache/
+    rm -rf "/opt/pelican-panel/panel.tar.gz"
     echo "${RELEASE}" >/opt/${APP}_version.txt
     msg_ok "Updated $APP to v${RELEASE}"
 
@@ -74,11 +76,7 @@ function update_script() {
     $STD php artisan queue:restart
     $STD php artisan up
     msg_ok "Started Service"
-
-    msg_info "Cleaning up"
-    rm -rf "/opt/pelican-panel/panel.tar.gz"
-    msg_ok "Cleaned"
-    msg_ok "Updated Successfully"
+    msg_ok "Updated successfully!"
   else
     msg_ok "No update required. ${APP} is already at v${RELEASE}"
   fi

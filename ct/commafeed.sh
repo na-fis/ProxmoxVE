@@ -28,11 +28,13 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/Athou/commafeed/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
-  if [[ "${RELEASE}" != "$(cat ~/.commafeed 2>/dev/null)" ]] || [[ ! -f ~/.commafeed ]]; then
-    msg_info "Stopping ${APP}"
+
+  JAVA_VERSION="25" setup_java
+
+  if check_for_gh_release "commafeed" "Athou/commafeed"; then
+    msg_info "Stopping Service"
     systemctl stop commafeed
-    msg_ok "Stopped ${APP}"
+    msg_ok "Stopped Service"
 
     if ! [[ $(dpkg -s rsync 2>/dev/null) ]]; then
       msg_info "Installing Dependencies"
@@ -55,12 +57,10 @@ function update_script() {
       msg_ok "Restored data"
     fi
 
-    msg_info "Starting ${APP}"
+    msg_info "Starting Service"
     systemctl start commafeed
-    msg_ok "Started ${APP}"
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

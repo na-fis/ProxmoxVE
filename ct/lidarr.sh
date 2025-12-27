@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -29,23 +29,18 @@ function update_script() {
     exit
   fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/Lidarr/Lidarr/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-  if [[ "${RELEASE}" != "$(cat ~/.lidarr)" ]] || [[ ! -f ~/.lidarr ]]; then
-
+  if check_for_gh_release "lidarr" "Lidarr/Lidarr"; then
     msg_info "Stopping service"
     systemctl stop lidarr
     msg_ok "Service stopped"
 
     fetch_and_deploy_gh_release "lidarr" "Lidarr/Lidarr" "prebuild" "latest" "/opt/Lidarr" "Lidarr.master*linux-core-x64.tar.gz"
     chmod 775 /opt/Lidarr
-    
+
     msg_info "Starting service"
     systemctl start lidarr
     msg_ok "Service started"
-
-    msg_ok "Updated successfully"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

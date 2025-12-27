@@ -20,6 +20,7 @@ curl -fsSL "https://files.teamspeak-services.com/releases/server/${RELEASE}/team
 tar -xf ./ts3server.tar.bz2
 mv teamspeak3-server_linux_amd64/ /opt/teamspeak-server/
 touch /opt/teamspeak-server/.ts3server_license_accepted
+rm -f ~/ts3server.tar.bz*
 echo "${RELEASE}" >~/.teamspeak-server
 msg_ok "Setup Teamspeak Server"
 
@@ -48,9 +49,4 @@ msg_ok "Created service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-rm -f ~/ts3server.tar.bz*
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

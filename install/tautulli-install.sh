@@ -14,23 +14,17 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y git
-$STD apt-get install -y pip
+$STD apt install -y git
 msg_ok "Installed Dependencies"
 
-msg_info "Setup Python3"
-$STD apt-get install -y \
-  python3 \
-  python3-dev \
-  python3-pip
-rm -rf /usr/lib/python3.*/EXTERNALLY-MANAGED
-msg_ok "Setup Python3"
+PYTHON_VERSION="3.13" setup_uv
+fetch_and_deploy_gh_release "Tautulli" "Tautulli/Tautulli" "tarball"
 
 msg_info "Installing Tautulli"
-cd /opt
-$STD git clone https://github.com/Tautulli/Tautulli.git
-$STD pip install -q -r /opt/Tautulli/requirements.txt
-$STD pip install pyopenssl
+cd /opt/Tautulli
+uv venv -q
+uv pip install -q -r requirements.txt
+uv pip install -q pyopenssl
 msg_ok "Installed Tautulli"
 
 msg_info "Creating Service"
@@ -44,7 +38,7 @@ WorkingDirectory=/opt/Tautulli/
 Restart=on-failure
 RestartSec=5
 Type=simple
-ExecStart=/usr/bin/python3 /opt/Tautulli/Tautulli.py
+ExecStart=/opt/Tautulli/.venv/bin/python3 /opt/Tautulli/Tautulli.py
 KillSignal=SIGINT
 TimeoutStopSec=20
 SyslogIdentifier=tautulli
@@ -57,8 +51,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

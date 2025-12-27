@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-512}"
 var_disk="${var_disk:-2}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,9 +27,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-
-  RELEASE=$(curl -fsSL https://api.github.com/repos/inspircd/inspircd/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.inspircd 2>/dev/null)" ]] || [[ ! -f ~/.inspircd ]]; then
+  if check_for_gh_release "inspircd" "inspircd/inspircd"; then
     msg_info "Stopping Service"
     systemctl stop inspircd
     msg_ok "Stopped Service"
@@ -39,10 +37,7 @@ function update_script() {
     msg_info "Starting Service"
     systemctl start inspircd
     msg_ok "Started Service"
-
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}."
+    msg_ok "Updated successfully!"
   fi
   exit
 }

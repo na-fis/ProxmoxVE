@@ -4,14 +4,14 @@
   "categories": [
     21
   ],
-  "date_created": "2024-05-11",
+  "date_created": "2025-09-17",
   "type": "ct",
   "updateable": true,
   "privileged": false,
   "interface_port": 80,
   "documentation": "https://caddyserver.com/docs/",
   "website": "https://caddyserver.com/",
-  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons/webp/caddy.webp",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/caddy.webp",
   "config_path": "/etc/caddy/Caddyfile",
   "description": "Caddy is a powerful, extensible platform to serve your sites, services, and apps, written in Go.",
   "install_methods": [
@@ -21,9 +21,20 @@
       "resources": {
         "cpu": 1,
         "ram": 512,
-        "hdd": 4,
+        "hdd": 6,
         "os": "debian",
         "version": "12"
+      }
+    },
+    {
+      "type": "alpine",
+      "script": "ct/alpine-caddy.sh",
+      "resources": {
+        "cpu": 1,
+        "ram": 256,
+        "hdd": 3,
+        "os": "alpine",
+        "version": "3.22"
       }
     }
   ],

@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-10}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -28,21 +28,20 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  if fetch_and_deploy_gh_release "seelf" "YuukanOO/seelf"; then
-    msg_ok "$APP already at the latest version. No update required."
-  else
-    msg_info "Stopping $APP"
+  if check_for_gh_release "seelf" "YuukanOO/seelf"; then
+    msg_info "Stopping Service"
     systemctl stop seelf
-    msg_ok "Stopped $APP"
+    msg_info "Stopped Service"
 
     msg_info "Updating $APP"
     cd /opt/seelf
     $STD make build
     msg_ok "Updated $APP"
 
-    msg_info "Starting $APP"
+    msg_info "Starting Service"
     systemctl start seelf
-    msg_ok "Started $APP"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

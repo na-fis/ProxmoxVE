@@ -13,8 +13,10 @@ setting_up_container
 network_check
 update_os
 
+setup_hwaccel
+
 msg_info "Installing Dependencies (Patience)"
-$STD apt-get install -y ffmpeg
+$STD apt install -y ffmpeg
 msg_ok "Installed Dependencies"
 
 fetch_and_deploy_gh_release "owncast" "owncast/owncast" "prebuild" "latest" "/opt/owncast" "owncast*linux-64bit.zip"
@@ -38,8 +40,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

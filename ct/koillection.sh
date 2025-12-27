@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,8 +27,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/benjaminjonard/koillection/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3) }')
-  if [[ ! -f ~/.koillection ]] || [[ "${RELEASE}" != "$(cat ~/.koillection)" ]]; then
+  if check_for_gh_release "koillection" "benjaminjonard/koillection"; then
     msg_info "Stopping Service"
     systemctl stop apache2
     msg_ok "Stopped Service"
@@ -36,10 +35,10 @@ function update_script() {
     msg_info "Creating a backup"
     mv /opt/koillection/ /opt/koillection-backup
     msg_ok "Backup created"
-    
+
     fetch_and_deploy_gh_release "koillection" "benjaminjonard/koillection"
 
-    msg_info "Updating ${APP} to v${RELEASE}"
+    msg_info "Updating Koillection"
     cd /opt/koillection
     cp -r /opt/koillection-backup/.env.local /opt/koillection
     cp -r /opt/koillection-backup/public/uploads/. /opt/koillection/public/uploads/
@@ -51,19 +50,13 @@ function update_script() {
     $STD yarn install
     $STD yarn build
     chown -R www-data:www-data /opt/koillection/public/uploads
-    msg_ok "Updated $APP to v${RELEASE}"
+    rm -r /opt/koillection-backup
+    msg_ok "Updated Koillection"
 
     msg_info "Starting Service"
     systemctl start apache2
     msg_ok "Started Service"
-
-    msg_info "Cleaning up"
-    rm -r /opt/koillection-backup
-    msg_ok "Cleaned"
-
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "Updated Successfully!"
   fi
   exit
 }

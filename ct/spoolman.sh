@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-1024}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,36 +27,29 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://github.com/Donkie/Spoolman/releases/latest | grep "title>Release" | cut -d " " -f 4)
-  if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
 
-    msg_info "Stopping ${APP} Service"
+  if check_for_gh_release "spoolman" "Donkie/Spoolman"; then
+    msg_info "Stopping Service"
     systemctl stop spoolman
-    msg_ok "Stopped ${APP} Service"
+    msg_ok "Stopped Service"
 
-    msg_info "Updating ${APP} to ${RELEASE}"
-    cd /opt
-    rm -rf spoolman_bak
-    mv spoolman spoolman_bak
-    curl -fsSL "https://github.com/Donkie/Spoolman/releases/download/${RELEASE}/spoolman.zip" -o $(basename "https://github.com/Donkie/Spoolman/releases/download/${RELEASE}/spoolman.zip")
-    $STD unzip spoolman.zip -d spoolman
-    cd spoolman
+    msg_info "Creating Backup"
+    [ -d /opt/spoolman_bak ] && rm -rf /opt/spoolman_bak
+    mv /opt/spoolman /opt/spoolman_bak
+    msg_ok "Created Backup"
+
+    fetch_and_deploy_gh_release "spoolman" "Donkie/Spoolman" "prebuild" "latest" "/opt/spoolman" "spoolman.zip"
+
+    msg_info "Updating Spoolman"
+    cd /opt/spoolman
     $STD pip3 install -r requirements.txt
-    curl -fsSL "https://raw.githubusercontent.com/Donkie/Spoolman/master/.env.example" -o ".env"
-    echo "${RELEASE}" >/opt/${APP}_version.txt
-    msg_ok "Updated ${APP} to ${RELEASE}"
+    cp /opt/spoolman_bak/.env /opt/spoolman
+    msg_ok "Updated Spoolman"
 
-    msg_info "Starting ${APP} Service"
+    msg_info "Starting Service"
     systemctl start spoolman
-    msg_ok "Started ${APP} Service"
-
-    msg_info "Cleaning up"
-    rm -rf /opt/spoolman.zip
-    msg_ok "Cleaned"
-
-    msg_ok "Updated Successfully!\n"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

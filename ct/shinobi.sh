@@ -13,6 +13,7 @@ var_disk="${var_disk:-8}"
 var_os="${var_os:-ubuntu}"
 var_version="${var_version:-24.04}"
 var_unprivileged="${var_unprivileged:-0}"
+var_gpu="${var_gpu:-yes}"
 
 header_info "$APP"
 variables
@@ -27,13 +28,15 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  msg_info "Updating Shinobi LXC"
+  setup_mariadb
+  msg_info "Updating Shinobi"
   cd /opt/Shinobi
-  sh UPDATE.sh
-  pm2 flush
-  pm2 restart camera
-  pm2 restart cron
-  msg_ok "Updated Shinobi LXC"
+  $STD sh UPDATE.sh
+  $STD pm2 flush
+  $STD pm2 restart camera
+  $STD pm2 restart cron
+  msg_ok "Updated Shinobi"
+  msg_ok "Updated successfully!"
   exit
 }
 

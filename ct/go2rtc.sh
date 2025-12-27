@@ -13,6 +13,7 @@ var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
+var_gpu="${var_gpu:-yes}"
 
 header_info "$APP"
 variables
@@ -28,8 +29,7 @@ function update_script() {
     exit
   fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/AlexxIT/go2rtc/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.go2rtc 2>/dev/null)" ]] || [[ ! -f ~/.go2rtc ]]; then
+  if check_for_gh_release "go2rtc" "AlexxIT/go2rtc"; then
     msg_info "Stopping service"
     systemctl stop go2rtc
     msg_ok "Stopped service"
@@ -39,10 +39,7 @@ function update_script() {
     msg_info "Starting service"
     systemctl start go2rtc
     msg_ok "Started service"
-
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

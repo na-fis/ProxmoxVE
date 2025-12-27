@@ -19,14 +19,10 @@ RELEASE=$(echo "$DEB_URL" | grep -oP 'lyrionmusicserver_\K[0-9.]+(?=_amd64\.deb)
 DEB_FILE="/tmp/lyrionmusicserver_${RELEASE}_amd64.deb"
 curl -fsSL -o "$DEB_FILE" "$DEB_URL"
 $STD apt install "$DEB_FILE" -y
+rm -f "$DEB_FILE"
 echo "${RELEASE}" >"/opt/lyrion_version.txt"
 msg_ok "Setup Lyrion Music Server v${RELEASE}"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD rm -f "$DEB_FILE"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

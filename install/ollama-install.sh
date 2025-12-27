@@ -14,33 +14,41 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   build-essential \
   pkg-config
 msg_ok "Installed Dependencies"
 
 msg_info "Setting up Intel® Repositories"
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key | gpg --dearmor -o /etc/apt/keyrings/intel-graphics.gpg
-echo "deb [arch=amd64,i386 signed-by=/etc/apt/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" >/etc/apt/sources.list.d/intel-gpu-jammy.list
-curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /etc/apt/keyrings/oneapi-archive-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" >/etc/apt/sources.list.d/oneAPI.list
-$STD apt-get update
+mkdir -p /usr/share/keyrings
+curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key | gpg --dearmor -o /usr/share/keyrings/intel-graphics.gpg
+cat <<EOF >/etc/apt/sources.list.d/intel-gpu.sources
+Types: deb
+URIs: https://repositories.intel.com/gpu/ubuntu
+Suites: jammy
+Components: client
+Architectures: amd64 i386
+Signed-By: /usr/share/keyrings/intel-graphics.gpg
+EOF
+curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg
+cat <<EOF >/etc/apt/sources.list.d/oneAPI.sources
+Types: deb
+URIs: https://apt.repos.intel.com/oneapi
+Suites: all
+Components: main
+Signed-By: /usr/share/keyrings/oneapi-archive-keyring.gpg
+EOF
+$STD apt update
 msg_ok "Set up Intel® Repositories"
 
-msg_info "Setting Up Hardware Acceleration"
-$STD apt-get -y install {va-driver-all,ocl-icd-libopencl1,intel-opencl-icd,vainfo,intel-gpu-tools,intel-level-zero-gpu,level-zero,level-zero-dev}
-if [[ "$CTTYPE" == "0" ]]; then
-  chgrp video /dev/dri
-  chmod 755 /dev/dri
-  chmod 660 /dev/dri/*
-  $STD adduser $(id -u -n) video
-  $STD adduser $(id -u -n) render
-fi
-msg_ok "Set Up Hardware Acceleration"
+setup_hwaccel
+
+msg_info "Installing Intel® Level Zero"
+$STD apt -y install intel-level-zero-gpu level-zero level-zero-dev 2>/dev/null || true
+msg_ok "Installed Intel® Level Zero"
 
 msg_info "Installing Intel® oneAPI Base Toolkit (Patience)"
-$STD apt-get install -y --no-install-recommends intel-basekit-2024.1
+$STD apt install -y --no-install-recommends intel-basekit-2024.1
 msg_ok "Installed Intel® oneAPI Base Toolkit"
 
 msg_info "Installing Ollama (Patience)"
@@ -51,7 +59,7 @@ mkdir -p $OLLAMA_INSTALL_DIR
 OLLAMA_URL="https://github.com/ollama/ollama/releases/download/${RELEASE}/ollama-linux-amd64.tgz"
 TMP_TAR="/tmp/ollama.tgz"
 echo -e "\n"
-if curl -fL# -o "$TMP_TAR" "$OLLAMA_URL"; then
+if curl -fL# -C - -o "$TMP_TAR" "$OLLAMA_URL"; then
   if tar -xzf "$TMP_TAR" -C "$OLLAMA_INSTALL_DIR"; then
     ln -sf "$OLLAMA_INSTALL_DIR/bin/ollama" "$BINDIR/ollama"
     echo "${RELEASE}" >/opt/Ollama_version.txt
@@ -100,8 +108,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

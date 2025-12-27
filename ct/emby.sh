@@ -13,6 +13,7 @@ var_disk="${var_disk:-8}"
 var_os="${var_os:-ubuntu}"
 var_version="${var_version:-24.04}"
 var_unprivileged="${var_unprivileged:-1}"
+var_gpu="${var_gpu:-yes}"
 
 header_info "$APP"
 variables
@@ -28,21 +29,19 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/MediaBrowser/Emby.Releases/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
-  if [[ "${RELEASE}" != "$(cat ~/.emby 2>/dev/null)" ]] || [[ ! -f ~/.emby ]]; then
-    msg_info "Stopping ${APP}"
+  if check_for_gh_release "emby" "MediaBrowser/Emby.Releases"; then
+    msg_info "Stopping Service"
     systemctl stop emby-server
-    msg_ok "Stopped ${APP}"
+    msg_ok "Stopped Service"
 
     fetch_and_deploy_gh_release "emby" "MediaBrowser/Emby.Releases" "binary"
 
-    msg_info "Starting ${APP}"
+    msg_info "Starting Service"
     systemctl start emby-server
-    msg_ok "Started ${APP}"
-
-    msg_ok "Updated Successfully"
-    exit
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
+  exit
 }
 
 start

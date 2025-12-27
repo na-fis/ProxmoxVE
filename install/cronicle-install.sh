@@ -24,15 +24,8 @@ $STD node bin/build.js dist
 sed -i "s/localhost:3012/${IP}:3012/g" /opt/cronicle/conf/config.json
 $STD /opt/cronicle/bin/control.sh setup
 $STD /opt/cronicle/bin/control.sh start
-$STD cp /opt/cronicle/bin/cronicled.init /etc/init.d/cronicled
-chmod 775 /etc/init.d/cronicled
-$STD update-rc.d cronicled defaults
 msg_ok "Configured Cronicle Primary Server"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

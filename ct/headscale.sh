@@ -11,7 +11,7 @@ var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-512}"
 var_disk="${var_disk:-2}"
 var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -31,22 +31,18 @@ function update_script() {
     mv /opt/"${APP}_version.txt" ~/.headscale
   fi
 
-  RELEASE=$(curl -fsSL https://api.github.com/repos/juanfont/headscale/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.headscale 2>/dev/null)" ]] || [[ ! -f ~/.headscale ]]; then
-    msg_info "Stopping ${APP}"
+  if check_for_gh_release "headscale" "juanfont/headscale"; then
+    msg_info "Stopping Service"
     systemctl stop headscale
-    msg_ok "Stopped ${APP}"
+    msg_ok "Stopped Service"
 
     fetch_and_deploy_gh_release "headscale" "juanfont/headscale" "binary"
     fetch_and_deploy_gh_release "headscale-admin" "GoodiesHQ/headscale-admin" "prebuild" "latest" "/opt/headscale-admin" "admin.zip"
 
-    msg_info "Starting ${APP}"
-    # Temporary fix until headscale project resolves service getting disabled on updates.
+    msg_info "Starting Service"
     systemctl enable -q --now headscale
-    msg_ok "Started ${APP}"
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required. ${APP} is already at ${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }
@@ -57,3 +53,5 @@ description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
+echo -e "${INFO}${YW} Access it using the following URL:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}Headscale API: ${IP}/api (no Frontend) | headscale-admin: http://${IP}/admin/${CL}"

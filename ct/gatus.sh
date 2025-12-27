@@ -28,33 +28,32 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  RELEASE=$(curl -s https://api.github.com/repos/TwiN/gatus/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
-  if [[ "${RELEASE}" != "$(cat ~/.gatus 2>/dev/null)" ]] || [[ ! -f ~/.gatus ]]; then
-    msg_info "Updating $APP"
-
-    msg_info "Stopping $APP"
+  if check_for_gh_release "gatus" "TwiN/gatus"; then
+    msg_info "Stopping Service"
     systemctl stop gatus
-    msg_ok "Stopped $APP"
+    msg_ok "Stopped Service"
+
+    if [[ :$PATH: != *":/usr/local/bin:"* ]]; then
+      echo 'export PATH="/usr/local/bin:$PATH"' >>~/.bashrc
+      source ~/.bashrc
+    fi
 
     mv /opt/gatus/config/config.yaml /opt
     rm -rf /opt/gatus
     fetch_and_deploy_gh_release "gatus" "TwiN/gatus"
 
-    msg_info "Updating $APP to v${RELEASE}"
+    msg_info "Updating Gatus"
     cd /opt/gatus
     $STD go mod tidy
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gatus .
     setcap CAP_NET_RAW+ep gatus
     mv /opt/config.yaml config
-    msg_ok "Updated $APP to v${RELEASE}"
+    msg_ok "Updated Gatus"
 
-    msg_info "Starting $APP"
+    msg_info "Starting Service"
     systemctl start gatus
-    msg_ok "Started $APP"
-
-    msg_ok "Update Successful"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

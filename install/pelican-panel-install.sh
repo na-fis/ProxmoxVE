@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   lsb-release \
   apache2 \
   composer
@@ -25,13 +25,19 @@ setup_mariadb
 msg_info "Adding PHP8.4 Repository"
 $STD curl -sSLo /tmp/debsuryorg-archive-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
 $STD dpkg -i /tmp/debsuryorg-archive-keyring.deb
-$STD sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
-$STD apt-get update
+cat <<EOF >/etc/apt/sources.list.d/php.sources
+Types: deb
+URIs: https://packages.sury.org/php/
+Suites: $(lsb_release -sc)
+Components: main
+Signed-By: /usr/share/keyrings/deb.sury.org-php.gpg
+EOF
+$STD apt update
 msg_ok "Added PHP8.4 Repository"
 
 msg_info "Installing PHP"
-$STD apt-get remove -y php8.2*
-$STD apt-get install -y \
+$STD apt remove -y php8.2*
+$STD apt install -y \
   php8.4 \
   php8.4-{gd,mysql,mbstring,bcmath,xml,curl,zip,intl,sqlite3,fpm} \
   libapache2-mod-php8.4
@@ -64,6 +70,7 @@ $STD php artisan p:environment:queue-service --no-interaction
 echo "* * * * * php /opt/pelican-panel/artisan schedule:run >> /dev/null 2>&1" | crontab -u www-data -
 chown -R www-data:www-data /opt/pelican-panel
 chmod -R 755 /opt/pelican-panel/storage /opt/pelican-panel/bootstrap/cache/
+rm -rf "/opt/pelican-panel/panel.tar.gz"
 echo "${RELEASE}" >/opt/"${APPLICATION}"_version.txt
 msg_ok "Installed Pelican Panel"
 
@@ -94,9 +101,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-rm -rf "/opt/pelican-panel/panel.tar.gz"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc

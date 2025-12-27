@@ -28,22 +28,17 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-
-  RELEASE=$(curl -fsSL https://api.github.com/repos/cloudreve/cloudreve/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3) }')
-  if [[ "${RELEASE}" != "$(cat ~/.cloudreve 2>/dev/null)" ]] || [[ ! -f ~/.cloudreve ]]; then
-    msg_info "Stopping $APP"
+  if check_for_gh_release "cloudreve" "cloudreve/cloudreve"; then
+    msg_info "Stopping Service"
     systemctl stop cloudreve
-    msg_ok "Stopped $APP"
+    msg_info "Stopped Service"
 
     fetch_and_deploy_gh_release "cloudreve" "cloudreve/cloudreve" "prebuild" "latest" "/opt/cloudreve" "*linux_amd64.tar.gz"
 
-    msg_info "Starting $APP"
+    msg_info "Starting Service"
     systemctl start cloudreve
-    msg_ok "Started $APP"
-
-    msg_ok "Update Successful"
-  else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "Started Service"
+    msg_ok "Updated successfully!"
   fi
   exit
 }

@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   make \
   build-essential
 msg_ok "Installed Dependencies"
@@ -62,6 +62,9 @@ EOF
 $STD yarn prisma:generate
 $STD yarn web:build
 $STD yarn prisma:deploy
+rm -rf ~/.cargo/registry ~/.cargo/git ~/.cargo/.package-cache
+rm -rf /root/.cache/yarn
+rm -rf /opt/linkwarden/.next/cache
 msg_ok "Installed Linkwarden"
 
 msg_info "Creating Service"
@@ -84,11 +87,4 @@ msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Cleaning up"
-rm -rf ~/.cargo/registry ~/.cargo/git ~/.cargo/.package-cache ~/.rustup
-rm -rf /root/.cache/yarn
-rm -rf /opt/linkwarden/.next/cache
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-msg_ok "Cleaned"
+cleanup_lxc
