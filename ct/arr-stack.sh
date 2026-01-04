@@ -88,10 +88,8 @@ function update_script() {
             $STD git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
             cd /opt/seerr || exit
             
-            if ! command -v pnpm &>/dev/null; then
-                msg_info "Installing pnpm"
-                $STD npm install -g pnpm@latest
-            fi
+            msg_info "Ensuring latest pnpm is installed"
+            $STD npm install -g pnpm@latest
             
             msg_info "Building Seerr (Patience)"
             $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
