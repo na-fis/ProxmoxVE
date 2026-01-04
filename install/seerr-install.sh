@@ -17,7 +17,7 @@ NODE_VERSION="22" NODE_MODULE="yarn@latest" setup_nodejs
 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"
 
 msg_info "Configuring Seerr (Patience)"
-cd /opt/seerr
+cd /opt/seerr || exit
 $STD yarn install
 $STD yarn build
 msg_ok "Configured Seerr"
@@ -31,7 +31,7 @@ After=network.target
 [Service]
 Type=exec
 WorkingDirectory=/opt/seerr
-ExecStart=/usr/bin/yarn start
+ExecStart=/usr/local/bin/pnpm start
 
 [Install]
 WantedBy=multi-user.target

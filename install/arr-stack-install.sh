@@ -110,7 +110,7 @@ UMask=0000
 Type=exec
 WorkingDirectory=/opt/seerr
 Environment=CONFIG_DIRECTORY=/var/lib/seerr
-ExecStart=/usr/bin/yarn start
+ExecStart=/usr/local/bin/pnpm start
 
 [Install]
 WantedBy=multi-user.target
