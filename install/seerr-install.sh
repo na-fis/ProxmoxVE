@@ -13,10 +13,9 @@ setting_up_container
 network_check
 update_os
 
-NODE_VERSION="22" NODE_MODULE="pnpm@9" setup_nodejs
-fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"
-
-msg_info "Configuring Seerr (Patience)"
+NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
+msg_info "Cloning and Building Seerr (Patience)"
+git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
 cd /opt/seerr || exit
 $STD pnpm install
 $STD pnpm build

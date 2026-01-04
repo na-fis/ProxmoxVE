@@ -16,9 +16,8 @@ update_os
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
     sqlite3
-if ! command -v pnpm &>/dev/null; then
     msg_info "Installing pnpm"
-    $STD npm install -g pnpm@9
+    $STD npm install -g pnpm@latest
 fi
 $STD apt-get install -y \
     git \
@@ -26,7 +25,7 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 # Install Node.js for Seerr
-NODE_VERSION="22" NODE_MODULE="pnpm@9,yarn@latest" setup_nodejs
+NODE_VERSION="22" NODE_MODULE="pnpm@latest,yarn@latest" setup_nodejs
 
 msg_info "Installing Sonarr v4"
 mkdir -p /var/lib/sonarr/
@@ -50,10 +49,10 @@ chmod 775 /opt/Radarr
 rm -rf "$temp_file"
 msg_ok "Installed Radarr"
 
-msg_info "Installing Seerr (Patience)"
+msg_info "Cloning and Building Seerr (Patience)"
 mkdir -p /var/lib/seerr/
 chmod 775 /var/lib/seerr/
-fetch_and_deploy_gh_release "seerr" "seerr-team/seerr"
+git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
 cd /opt/seerr || exit
 $STD pnpm install
 $STD pnpm build
