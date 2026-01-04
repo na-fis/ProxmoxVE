@@ -13,7 +13,7 @@ setting_up_container
 network_check
 update_os
 
-NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
+NODE_VERSION="22" NODE_MODULE="pnpm@9" setup_nodejs
 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"
 
 msg_info "Configuring Seerr (Patience)"

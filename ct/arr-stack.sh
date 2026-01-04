@@ -85,7 +85,7 @@ function update_script() {
             cd /opt/seerr || exit
             if ! command -v pnpm &>/dev/null; then
                 msg_info "Installing pnpm"
-                $STD npm install -g pnpm
+                $STD npm install -g pnpm@9
             fi
             $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
             $STD pnpm build
@@ -100,7 +100,7 @@ function update_script() {
         # Ensure pnpm is present and service is correctly patched
         if ! command -v pnpm &>/dev/null; then
             msg_info "Ensuring pnpm is installed"
-            $STD npm install -g pnpm
+            $STD npm install -g pnpm@9
         fi
         
         # Patch service file if it is using yarn or invalid path

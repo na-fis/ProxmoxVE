@@ -15,13 +15,18 @@ update_os
 
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
-    sqlite3 \
+    sqlite3
+if ! command -v pnpm &>/dev/null; then
+    msg_info "Installing pnpm"
+    $STD npm install -g pnpm@9
+fi
+$STD apt-get install -y \
     git \
     build-essential
 msg_ok "Installed Dependencies"
 
 # Install Node.js for Seerr
-NODE_VERSION="22" NODE_MODULE="pnpm@latest,yarn@latest" setup_nodejs
+NODE_VERSION="22" NODE_MODULE="pnpm@9,yarn@latest" setup_nodejs
 
 msg_info "Installing Sonarr v4"
 mkdir -p /var/lib/sonarr/
