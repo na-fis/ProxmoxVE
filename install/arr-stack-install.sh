@@ -21,7 +21,7 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 # Install Node.js for Seerr
-NODE_VERSION="22" NODE_MODULE="yarn@latest" setup_nodejs
+NODE_VERSION="22" NODE_MODULE="pnpm@latest,yarn@latest" setup_nodejs
 
 msg_info "Installing Sonarr v4"
 mkdir -p /var/lib/sonarr/
@@ -50,8 +50,8 @@ mkdir -p /var/lib/seerr/
 chmod 775 /var/lib/seerr/
 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr"
 cd /opt/seerr || exit
-$STD yarn install
-$STD yarn build
+$STD pnpm install
+$STD pnpm build
 msg_ok "Installed Seerr"
 
 # shellcheck disable=SC1090

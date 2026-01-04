@@ -83,8 +83,12 @@ function update_script() {
             rm -rf /opt/seerr
             fetch_and_deploy_gh_release "seerr" "seerr-team/seerr"
             cd /opt/seerr || exit
-            $STD env CYPRESS_INSTALL_BINARY=0 yarn install
-            $STD yarn build
+            if ! command -v pnpm &>/dev/null; then
+                msg_info "Installing pnpm"
+                $STD npm install -g pnpm
+            fi
+            $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
+            $STD pnpm build
 
             # Save version
             echo "${RELEASE}" > ~/.seerr
