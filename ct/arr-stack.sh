@@ -75,11 +75,14 @@ function update_script() {
         RELEASE=$(curl -fsSL https://api.github.com/repos/seerr-team/seerr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
 
         if [[ "${RELEASE}" != "${CURRENT_VERSION}" ]] || [[ ! -f /opt/seerr/dist/index.js ]]; then
-            # Backup current installation
-            rm -rf /opt/seerr_backup
-            cp -r /opt/seerr /opt/seerr_backup
+            # Backup current installation if it exists
+            if [[ -d /opt/seerr ]]; then
+                rm -rf /opt/seerr_backup
+                cp -r /opt/seerr /opt/seerr_backup
+            fi
 
             # Download and install latest code from develop branch
+            cd /opt || exit
             rm -rf /opt/seerr
             msg_info "Cloning Seerr develop branch"
             $STD git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
@@ -87,7 +90,7 @@ function update_script() {
             
             if ! command -v pnpm &>/dev/null; then
                 msg_info "Installing pnpm"
-                $STD npm install -g pnpm@9
+                $STD npm install -g pnpm@latest
             fi
             
             msg_info "Building Seerr (Patience)"
@@ -104,7 +107,7 @@ function update_script() {
         # Ensure pnpm is present and service is correctly patched
         if ! command -v pnpm &>/dev/null; then
             msg_info "Ensuring pnpm is installed"
-            $STD npm install -g pnpm@9
+            $STD npm install -g pnpm@latest
         fi
         
         # Patch service file if it is using yarn or invalid path
