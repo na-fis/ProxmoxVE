@@ -13,13 +13,13 @@ setting_up_container
 network_check
 update_os
 
-NODE_VERSION="22" NODE_MODULE="yarn@latest" setup_nodejs
+NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"
 
 msg_info "Configuring Seerr (Patience)"
 cd /opt/seerr || exit
-$STD yarn install
-$STD yarn build
+$STD pnpm install
+$STD pnpm build
 msg_ok "Configured Seerr"
 
 msg_info "Creating Service"
