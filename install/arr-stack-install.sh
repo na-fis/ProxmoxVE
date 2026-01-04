@@ -3,7 +3,7 @@
 # Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: Combined Arr Stack (Sonarr + Radarr + Overseerr)
+# Source: Combined Arr Stack (Sonarr + Radarr + Seerr)
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -20,7 +20,7 @@ $STD apt-get install -y \
     build-essential
 msg_ok "Installed Dependencies"
 
-# Install Node.js for Overseerr
+# Install Node.js for Seerr
 NODE_VERSION="22" NODE_MODULE="yarn@latest" setup_nodejs
 
 msg_info "Installing Sonarr v4"
@@ -45,14 +45,14 @@ chmod 775 /opt/Radarr
 rm -rf "$temp_file"
 msg_ok "Installed Radarr"
 
-msg_info "Installing Overseerr (Patience)"
-mkdir -p /var/lib/overseerr/
-chmod 775 /var/lib/overseerr/
-fetch_and_deploy_gh_release "overseerr" "sct/overseerr"
-cd /opt/overseerr || exit
+msg_info "Installing Seerr (Patience)"
+mkdir -p /var/lib/seerr/
+chmod 775 /var/lib/seerr/
+fetch_and_deploy_gh_release "seerr" "seerr-team/seerr"
+cd /opt/seerr || exit
 $STD yarn install
 $STD yarn build
-msg_ok "Installed Overseerr"
+msg_ok "Installed Seerr"
 
 # shellcheck disable=SC1090
 source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
@@ -97,10 +97,10 @@ EOF
 systemctl enable -q --now radarr
 msg_ok "Created Radarr Service"
 
-msg_info "Creating Overseerr Service"
-cat <<EOF >/etc/systemd/system/overseerr.service
+msg_info "Creating Seerr Service"
+cat <<EOF >/etc/systemd/system/seerr.service
 [Unit]
-Description=Overseerr Service
+Description=Seerr Service
 After=network.target
 
 [Service]
@@ -108,15 +108,15 @@ User=root
 Group=root
 UMask=0000
 Type=exec
-WorkingDirectory=/opt/overseerr
-Environment=CONFIG_DIRECTORY=/var/lib/overseerr
+WorkingDirectory=/opt/seerr
+Environment=CONFIG_DIRECTORY=/var/lib/seerr
 ExecStart=/usr/bin/yarn start
 
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable -q --now overseerr.service
-msg_ok "Created Overseerr Service"
+systemctl enable -q --now seerr.service
+msg_ok "Created Seerr Service"
 
 # Agregarr service is created by its own install script
 

@@ -1,0 +1,35 @@
+{
+  "name": "Seerr",
+  "slug": "seerr",
+  "categories": [
+    14
+  ],
+  "date_created": "2024-05-02",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "interface_port": 5055,
+  "documentation": "https://seerr.dev/",
+  "website": "https://seerr.dev/",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jellyseerr.webp",
+  "config_path": "/opt/seerr/config/settings.json",
+  "description": "Seerr is a request management and media discovery tool built to work with your existing Plex and Jellyfin ecosystem.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/seerr.sh",
+      "resources": {
+        "cpu": 2,
+        "ram": 4096,
+        "hdd": 8,
+        "os": "debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": []
+}

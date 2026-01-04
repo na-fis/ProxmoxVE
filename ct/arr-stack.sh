@@ -4,7 +4,7 @@ source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc
 # Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: Combined Arr Stack (Sonarr + Radarr + Overseerr)
+# Source: Combined Arr Stack (Sonarr + Radarr + Seerr)
 
 APP="Arr-Stack"
 var_tags="${var_tags:-arr,media}"
@@ -26,7 +26,7 @@ function update_script() {
     check_container_resources
     
     # Check if any of the applications are installed
-    if [[ ! -d /var/lib/sonarr/ ]] && [[ ! -d /var/lib/radarr/ ]] && [[ ! -d /var/lib/overseerr/ ]] && [[ ! -d /var/lib/agregarr/ ]]; then
+    if [[ ! -d /var/lib/sonarr/ ]] && [[ ! -d /var/lib/radarr/ ]] && [[ ! -d /var/lib/seerr/ ]] && [[ ! -d /var/lib/agregarr/ ]]; then
         msg_error "No ${APP} Installation Found!"
         exit
     fi
@@ -60,40 +60,40 @@ function update_script() {
         msg_ok "Updated Radarr"
     fi
     
-    # Update Overseerr if installed
-    if [[ -d /var/lib/overseerr/ ]]; then
-        msg_info "Updating Overseerr"
-        systemctl stop overseerr.service
+    # Update Seerr if installed
+    if [[ -d /var/lib/seerr/ ]]; then
+        msg_info "Updating Seerr"
+        systemctl stop seerr.service
 
         # Get current version
         CURRENT_VERSION=""
-        if [[ -f ~/.overseerr ]]; then
-            CURRENT_VERSION=$(cat ~/.overseerr)
+        if [[ -f ~/.seerr ]]; then
+            CURRENT_VERSION=$(cat ~/.seerr)
         fi
 
         # Get latest release version
-        RELEASE=$(curl -fsSL https://api.github.com/repos/sct/overseerr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
+        RELEASE=$(curl -fsSL https://api.github.com/repos/seerr-team/seerr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
 
         if [[ "${RELEASE}" != "${CURRENT_VERSION}" ]]; then
             # Backup current installation
-            rm -rf /opt/overseerr_backup
-            cp -r /opt/overseerr /opt/overseerr_backup
+            rm -rf /opt/seerr_backup
+            cp -r /opt/seerr /opt/seerr_backup
 
             # Download and install new version
-            rm -rf /opt/overseerr
-            fetch_and_deploy_gh_release "overseerr" "sct/overseerr"
-            cd /opt/overseerr || exit
+            rm -rf /opt/seerr
+            fetch_and_deploy_gh_release "seerr" "seerr-team/seerr"
+            cd /opt/seerr || exit
             $STD env CYPRESS_INSTALL_BINARY=0 yarn install
             $STD yarn build
 
             # Save version
-            echo "${RELEASE}" > ~/.overseerr
-            msg_ok "Updated Overseerr to v${RELEASE}"
+            echo "${RELEASE}" > ~/.seerr
+            msg_ok "Updated Seerr to v${RELEASE}"
         else
-            msg_ok "Overseerr is already up to date (v${RELEASE})"
+            msg_ok "Seerr is already up to date (v${RELEASE})"
         fi
 
-        systemctl start overseerr.service
+        systemctl start seerr.service
     fi
 
     # Update or Install Agregarr
@@ -124,5 +124,5 @@ echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access the applications using the following URLs:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Sonarr: http://${IP}:8989${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Radarr: http://${IP}:7878${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}Overseerr: http://${IP}:5055${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}Seerr: http://${IP}:5055${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Agregarr: http://${IP}:7171${CL}"
