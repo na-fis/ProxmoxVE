@@ -74,25 +74,29 @@ function update_script() {
         # Get latest release version
         RELEASE=$(curl -fsSL https://api.github.com/repos/seerr-team/seerr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
 
-        if [[ "${RELEASE}" != "${CURRENT_VERSION}" ]]; then
+        if [[ "${RELEASE}" != "${CURRENT_VERSION}" ]] || [[ ! -f /opt/seerr/dist/index.js ]]; then
             # Backup current installation
             rm -rf /opt/seerr_backup
             cp -r /opt/seerr /opt/seerr_backup
 
-            # Download and install new version
+            # Download and install latest code from develop branch
             rm -rf /opt/seerr
-            fetch_and_deploy_gh_release "seerr" "seerr-team/seerr"
+            msg_info "Cloning Seerr develop branch"
+            $STD git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
             cd /opt/seerr || exit
+            
             if ! command -v pnpm &>/dev/null; then
                 msg_info "Installing pnpm"
                 $STD npm install -g pnpm@9
             fi
+            
+            msg_info "Building Seerr (Patience)"
             $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
             $STD pnpm build
 
             # Save version
             echo "${RELEASE}" > ~/.seerr
-            msg_ok "Updated Seerr to v${RELEASE}"
+            msg_ok "Updated Seerr to latest (v${RELEASE})"
         else
             msg_ok "Seerr is already up to date (v${RELEASE})"
         fi
