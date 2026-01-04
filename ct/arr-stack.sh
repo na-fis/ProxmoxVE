@@ -92,17 +92,23 @@ function update_script() {
 
             # Save version
             echo "${RELEASE}" > ~/.seerr
-            
-            # Ensure service file uses pnpm instead of legacy yarn
-            if grep -q "yarn start" /etc/systemd/system/seerr.service; then
-                msg_info "Patching service file to use pnpm"
-                sed -i "s|ExecStart=.*yarn start|ExecStart=$(command -v pnpm) start|g" /etc/systemd/system/seerr.service
-                systemctl daemon-reload
-            fi
-
             msg_ok "Updated Seerr to v${RELEASE}"
         else
             msg_ok "Seerr is already up to date (v${RELEASE})"
+        fi
+
+        # Ensure pnpm is present and service is correctly patched
+        if ! command -v pnpm &>/dev/null; then
+            msg_info "Ensuring pnpm is installed"
+            $STD npm install -g pnpm
+        fi
+        
+        # Patch service file if it is using yarn or invalid path
+        local PNPM_PATH=$(command -v pnpm)
+        if grep -qE "yarn start|ExecStart= start" /etc/systemd/system/seerr.service; then
+            msg_info "Patching service file to use correct pnpm path"
+            sed -i "s|ExecStart=.*|ExecStart=$PNPM_PATH start|g" /etc/systemd/system/seerr.service
+            systemctl daemon-reload
         fi
 
         systemctl start seerr.service
