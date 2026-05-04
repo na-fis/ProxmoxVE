@@ -94,6 +94,8 @@ function update_script() {
             source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/tools.func)
             NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
             
+            cd /opt/seerr || exit
+            
             msg_info "Building Seerr (Patience)"
             $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
             $STD pnpm build
