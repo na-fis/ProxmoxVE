@@ -3641,6 +3641,9 @@ function setup_nodejs() {
 
     ensure_apt_working || return 1
 
+    # Upgrade nodejs package to latest minor/patch version
+    upgrade_packages_with_retry "nodejs" || true
+
     # Just update npm to latest
     $STD npm install -g npm@latest 2>/dev/null || true
 

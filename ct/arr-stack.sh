@@ -88,8 +88,11 @@ function update_script() {
             $STD git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
             cd /opt/seerr || exit
             
-            msg_info "Ensuring latest pnpm is installed"
-            $STD npm install -g pnpm@latest
+            msg_info "Ensuring correct Node.js version is installed"
+            $STD apt-get update
+            $STD apt-get install -y --only-upgrade nodejs
+            source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/tools.func)
+            NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
             
             msg_info "Building Seerr (Patience)"
             $STD env CYPRESS_INSTALL_BINARY=0 pnpm install

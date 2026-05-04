@@ -41,8 +41,14 @@ function update_script() {
 
     msg_info "Configuring ${APP} (Patience)"
     cd /opt/seerr
-    $STD yarn install
-    $STD yarn build
+    
+    $STD apt-get update
+    $STD apt-get install -y --only-upgrade nodejs
+    source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/tools.func)
+    NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
+    
+    $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
+    $STD pnpm build
     mv /opt/config_backup /opt/seerr/config
     msg_ok "Configured ${APP}"
 
