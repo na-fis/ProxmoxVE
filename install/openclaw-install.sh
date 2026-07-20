@@ -61,7 +61,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/openclaw
-ExecStart=/usr/local/bin/openclaw start
+ExecStart=/bin/openclaw start
 Restart=always
 RestartSec=10
 
