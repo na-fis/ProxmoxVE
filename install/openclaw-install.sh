@@ -4,7 +4,11 @@
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://openclaw.ai
 
-source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+if [[ -z "${FUNCTIONS_FILE_PATH:-}" ]]; then
+  source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/install.func)
+else
+  source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+fi
 color
 verb_ip6
 catch_errors
@@ -20,19 +24,29 @@ $STD apt install -y \
   python3-pip \
   git \
   curl \
-  jq
+  jq \
+  tar
 msg_ok "Installed Dependencies"
 
 NODE_VERSION="22" setup_nodejs
 
 msg_info "Installing OpenClaw Framework"
-$STD npm install --global openclaw
+$STD npm install --global openclaw@latest
 msg_ok "Installed OpenClaw"
 
 msg_info "Installing gog (Google Workspace CLI & MCP)"
-$STD curl -fsSL https://github.com/openclaw/gogcli/releases/latest/download/gog-linux-amd64 -o /usr/local/bin/gog
-chmod +x /usr/local/bin/gog
-msg_ok "Installed gog"
+GOG_URL=$(curl -s https://api.github.com/repos/openclaw/gogcli/releases/latest | jq -r '.assets[]? | select(.name | contains("linux_amd64")) | .browser_download_url' 2>/dev/null | head -n 1)
+if [[ -n "$GOG_URL" && "$GOG_URL" != "null" ]]; then
+  mkdir -p /tmp/gog_install
+  $STD curl -fsSL "$GOG_URL" -o /tmp/gog_install/gog.tar.gz
+  tar -xzf /tmp/gog_install/gog.tar.gz -C /tmp/gog_install 2>/dev/null || true
+  find /tmp/gog_install -type f \( -name "gog" -o -name "gogcli*" \) -exec mv {} /usr/local/bin/gog \; 2>/dev/null || true
+  chmod +x /usr/local/bin/gog 2>/dev/null || true
+  rm -rf /tmp/gog_install
+  msg_ok "Installed gog"
+else
+  msg_warn "Could not fetch gog binary - skipping"
+fi
 
 msg_info "Creating OpenClaw Workspace & Service"
 mkdir -p /opt/openclaw
