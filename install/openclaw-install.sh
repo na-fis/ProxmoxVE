@@ -6,6 +6,7 @@
 
 export APPLICATION="${APPLICATION:-OpenClaw}"
 export app="${app:-openclaw}"
+export SSH_ROOT="${SSH_ROOT:-no}"
 
 if [[ -z "${FUNCTIONS_FILE_PATH:-}" ]]; then
   source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/install.func)
