@@ -38,9 +38,9 @@ msg_ok "Installed Dependencies"
 
 NODE_VERSION="22" setup_nodejs
 
-msg_info "Installing OpenClaw Framework"
-$STD npm install --global openclaw@latest
-msg_ok "Installed OpenClaw"
+msg_info "Installing OpenClaw Framework & WhatsApp Plugin"
+$STD npm install --global openclaw@latest @openclaw/whatsapp@latest
+msg_ok "Installed OpenClaw & WhatsApp Plugin"
 
 msg_info "Installing gog (Google Workspace CLI & MCP)"
 if $STD npm install --global gogcli-mcp 2>/dev/null; then
