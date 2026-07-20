@@ -14,6 +14,12 @@ fi
 color
 verb_ip6
 catch_errors
+APPLICATION="${APPLICATION:-OpenClaw}"
+app="${app:-openclaw}"
+SSH_ROOT="${SSH_ROOT:-no}"
+PASSWORD="${PASSWORD:-}"
+SSH_AUTHORIZED_KEY="${SSH_AUTHORIZED_KEY:-}"
+DISABLEIPV6="${DISABLEIPV6:-no}"
 setting_up_container
 network_check
 update_os
