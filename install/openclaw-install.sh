@@ -4,6 +4,9 @@
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://openclaw.ai
 
+export APPLICATION="${APPLICATION:-OpenClaw}"
+export app="${app:-openclaw}"
+
 if [[ -z "${FUNCTIONS_FILE_PATH:-}" ]]; then
   source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/install.func)
 else
@@ -35,17 +38,10 @@ $STD npm install --global openclaw@latest
 msg_ok "Installed OpenClaw"
 
 msg_info "Installing gog (Google Workspace CLI & MCP)"
-GOG_URL=$(curl -s https://api.github.com/repos/openclaw/gogcli/releases/latest | jq -r '.assets[]? | select(.name | contains("linux_amd64")) | .browser_download_url' 2>/dev/null | head -n 1)
-if [[ -n "$GOG_URL" && "$GOG_URL" != "null" ]]; then
-  mkdir -p /tmp/gog_install
-  $STD curl -fsSL "$GOG_URL" -o /tmp/gog_install/gog.tar.gz
-  tar -xzf /tmp/gog_install/gog.tar.gz -C /tmp/gog_install 2>/dev/null || true
-  find /tmp/gog_install -type f \( -name "gog" -o -name "gogcli*" \) -exec mv {} /usr/local/bin/gog \; 2>/dev/null || true
-  chmod +x /usr/local/bin/gog 2>/dev/null || true
-  rm -rf /tmp/gog_install
-  msg_ok "Installed gog"
+if $STD npm install --global gogcli-mcp 2>/dev/null; then
+  msg_ok "Installed gogcli-mcp"
 else
-  msg_warn "Could not fetch gog binary - skipping"
+  msg_warn "Could not install gogcli-mcp - skipping"
 fi
 
 msg_info "Creating OpenClaw Workspace & Service"
