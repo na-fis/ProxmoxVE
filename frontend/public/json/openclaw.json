@@ -1,0 +1,35 @@
+{
+  "name": "OpenClaw",
+  "slug": "openclaw",
+  "categories": [
+    16
+  ],
+  "date_created": "2026-07-20",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "interface_port": 3000,
+  "documentation": "https://openclaw.ai/",
+  "website": "https://openclaw.ai/",
+  "logo": "https://openclaw.ai/logo.png",
+  "config_path": "/opt/openclaw/openclaw.json",
+  "description": "OpenClaw is an open-source, autonomous AI agent framework designed to run locally. It provides workflow automation, multi-channel messaging integrations (WhatsApp, Telegram, Discord), and MCP tool support (gog for Google Workspace).",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/openclaw.sh",
+      "resources": {
+        "cpu": 2,
+        "ram": 2048,
+        "hdd": 10,
+        "os": "debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": []
+}
