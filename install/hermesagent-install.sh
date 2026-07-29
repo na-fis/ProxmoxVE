@@ -69,7 +69,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/home/hermes
 EnvironmentFile=/etc/default/hermes
-ExecStart=/usr/local/bin/hermes start
+ExecStart=/usr/local/bin/hermes gateway run
 Restart=always
 RestartSec=10
 
