@@ -33,9 +33,11 @@ msg_ok "Installed Dependencies"
 NODE_VERSION="22" setup_nodejs
 
 msg_info "Installing gog (Google Workspace CLI & MCP)"
-$STD curl -fsSL https://github.com/openclaw/gogcli/releases/latest/download/gog-linux-amd64 -o /usr/local/bin/gog
-chmod +x /usr/local/bin/gog
-msg_ok "Installed gog"
+if $STD npm install --global gogcli-mcp 2>/dev/null; then
+  msg_ok "Installed gogcli-mcp"
+else
+  msg_warn "Could not install gogcli-mcp - skipping"
+fi
 
 msg_info "Creating Hermes User"
 useradd -m -s /bin/bash hermes
