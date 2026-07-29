@@ -1,0 +1,35 @@
+{
+  "name": "Hermes Agent",
+  "slug": "hermesagent",
+  "categories": [
+    16
+  ],
+  "date_created": "2026-07-29",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "interface_port": null,
+  "documentation": "https://hermes-agent.org/",
+  "website": "https://hermes-agent.org/",
+  "logo": "https://hermes-agent.org/logo.png",
+  "config_path": "/home/hermes/.hermes/config.yaml",
+  "description": "Hermes Agent is an open-source, autonomous AI agent framework by Nous Research. It features persistent memory, a built-in learning loop to acquire and refine skills, multi-platform messaging gateway, and support for Model Context Protocol (MCP) servers.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/hermesagent.sh",
+      "resources": {
+        "cpu": 2,
+        "ram": 4096,
+        "hdd": 20,
+        "os": "debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": []
+}

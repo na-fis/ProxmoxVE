@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2021-2026 ProxmoxVE Community Scripts
+# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# Source: https://hermes-agent.nousresearch.com/
+
+set +u
+
+if [[ -z "${FUNCTIONS_FILE_PATH:-}" ]]; then
+  source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/install.func)
+else
+  source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+fi
+color
+verb_ip6
+catch_errors
+setting_up_container
+network_check
+update_os
+
+msg_info "Installing Dependencies"
+$STD apt install -y \
+  ca-certificates \
+  build-essential \
+  python3 \
+  python3-pip \
+  git \
+  curl \
+  jq \
+  tar
+msg_ok "Installed Dependencies"
+
+NODE_VERSION="22" setup_nodejs
+
+msg_info "Installing gog (Google Workspace CLI & MCP)"
+$STD curl -fsSL https://github.com/openclaw/gogcli/releases/latest/download/gog-linux-amd64 -o /usr/local/bin/gog
+chmod +x /usr/local/bin/gog
+msg_ok "Installed gog"
+
+msg_info "Creating Hermes User"
+useradd -m -s /bin/bash hermes
+loginctl enable-linger hermes
+echo 'export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"' >>/home/hermes/.profile
+msg_ok "Created Hermes User"
+
+msg_info "Configuring Service Environment"
+cat <<EOF >/etc/default/hermes
+HOME=/home/hermes
+PATH=/home/hermes/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+NODE_OPTIONS=${NODE_OPTIONS}
+EOF
+msg_ok "Configured Service Environment"
+
+msg_warn "WARNING: This script will run an external installer from a third-party source (https://hermes-agent.nousresearch.com/)."
+msg_warn "The following code is NOT maintained or audited by our repository."
+msg_warn "If you have any doubts or concerns, please review the installer code before proceeding:"
+msg_custom "${TAB3}\e[1;34m" "→  https://hermes-agent.nousresearch.com/install.sh"
+echo
+read -r -p "${TAB3}Do you want to continue? [y/N]: " CONFIRM
+if [[ ! "$CONFIRM" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  msg_error "Aborted by user. No changes have been made."
+  exit 10
+fi
+
+msg_info "Installing Hermes Agent"
+$STD setsid --wait bash -c '
+  set -a; source /etc/default/hermes; set +a
+  export npm_config_yes=true
+  bash <(curl -fsSL https://hermes-agent.nousresearch.com/install.sh) --skip-setup
+'
+msg_ok "Installed Hermes Agent"
+
+msg_info "Configuring systemd service"
+mkdir -p /home/hermes/.config/systemd/user
+cat <<EOF >/home/hermes/.config/systemd/user/hermes.service
+[Unit]
+Description=Hermes AI Agent
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hermes
+EnvironmentFile=/etc/default/hermes
+ExecStart=/home/hermes/.local/bin/hermes start
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+EOF
+
+chown -R hermes:hermes /home/hermes/.config
+sudo -u hermes -i systemctl --user daemon-reload
+sudo -u hermes -i systemctl --user enable hermes.service
+msg_ok "Configured systemd service"
+
+motd_ssh
+customize
+cleanup_lxc
