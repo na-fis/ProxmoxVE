@@ -33,15 +33,19 @@ function update_script() {
     
     # Update Sonarr if installed
     if [[ -d /var/lib/sonarr/ ]]; then
-        msg_info "Updating Sonarr v4"
+        msg_info "Updating Sonarr"
         systemctl stop sonarr.service
-        curl -fsSL "https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&arch=x64" -o "SonarrV4.tar.gz"
-        tar -xzf SonarrV4.tar.gz
+        SONARR_BRANCH=$(grep -oPm1 "(?<=<Branch>)[^<]+" /var/lib/sonarr/config.xml 2>/dev/null || echo "main")
+        [[ -z "$SONARR_BRANCH" ]] && SONARR_BRANCH="main"
+        if ! curl -fsSL "https://services.sonarr.tv/v1/download/${SONARR_BRANCH}/latest?version=5&os=linux&arch=x64" -o "Sonarr.tar.gz"; then
+            curl -fsSL "https://services.sonarr.tv/v1/download/${SONARR_BRANCH}/latest?version=4&os=linux&arch=x64" -o "Sonarr.tar.gz"
+        fi
+        tar -xzf Sonarr.tar.gz
         rm -rf /opt/Sonarr
         mv Sonarr /opt
-        rm -rf SonarrV4.tar.gz
+        rm -rf Sonarr.tar.gz
         systemctl start sonarr.service
-        msg_ok "Updated Sonarr v4"
+        msg_ok "Updated Sonarr"
     fi
     
     # Update Radarr if installed
