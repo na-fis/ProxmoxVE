@@ -114,7 +114,7 @@ UMask=0000
 Type=exec
 WorkingDirectory=/opt/seerr
 Environment=CONFIG_DIRECTORY=/var/lib/seerr
-ExecStart=/usr/local/bin/pnpm start
+ExecStart=/usr/bin/node /opt/seerr/dist/index.js
 
 [Install]
 WantedBy=multi-user.target

@@ -117,11 +117,10 @@ function update_script() {
             $STD npm install -g pnpm@latest
         fi
         
-        # Patch service file if it is using yarn or invalid path
-        local PNPM_PATH=$(command -v pnpm)
-        if grep -qE "yarn start|ExecStart= start" /etc/systemd/system/seerr.service; then
-            msg_info "Patching service file to use correct pnpm path"
-            sed -i "s|ExecStart=.*|ExecStart=$PNPM_PATH start|g" /etc/systemd/system/seerr.service
+        # Patch service file if it is using yarn, pnpm or invalid path
+        if grep -qE "yarn start|ExecStart= start|pnpm start" /etc/systemd/system/seerr.service; then
+            msg_info "Patching service file to execute node directly"
+            sed -i "s|ExecStart=.*|ExecStart=/usr/bin/node /opt/seerr/dist/index.js|g" /etc/systemd/system/seerr.service
             systemctl daemon-reload
         fi
 
