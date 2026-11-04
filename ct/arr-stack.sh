@@ -26,7 +26,7 @@ function update_script() {
     check_container_resources
     
     # Check if any of the applications are installed
-    if [[ ! -d /var/lib/sonarr/ ]] && [[ ! -d /var/lib/radarr/ ]] && [[ ! -d /var/lib/seerr/ ]] && [[ ! -d /var/lib/agregarr/ ]]; then
+    if [[ ! -d /var/lib/sonarr/ ]] && [[ ! -d /var/lib/radarr/ ]] && [[ ! -d /var/lib/seerr/ ]] && [[ ! -d /var/lib/agregarr/ ]] && [[ ! -d /var/lib/maintainerr/ ]]; then
         msg_error "No ${APP} Installation Found!"
         exit
     fi
@@ -142,6 +142,24 @@ function update_script() {
         # shellcheck disable=SC1090
         source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
     fi
+
+    # Update or Install Maintainerr
+    if [[ -d /opt/maintainerr ]]; then
+        msg_info "Updating Maintainerr"
+        systemctl stop maintainerr.service
+        cd /opt/maintainerr || exit
+        git pull
+        corepack enable
+        $STD env CYPRESS_INSTALL_BINARY=0 yarn install --network-timeout 99999999
+        $STD yarn turbo build
+        cp -r /opt/maintainerr/apps/ui/dist /opt/maintainerr/apps/server/dist/ui
+        systemctl start maintainerr.service
+        msg_ok "Updated Maintainerr"
+    else
+        msg_info "Installing Maintainerr (New Component)"
+        # shellcheck disable=SC1090
+        source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/maintainerr-install.sh)
+    fi
     
     exit
 }
@@ -157,3 +175,4 @@ echo -e "${TAB}${GATEWAY}${BGN}Sonarr: http://${IP}:8989${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Radarr: http://${IP}:7878${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Seerr: http://${IP}:5055${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}Agregarr: http://${IP}:7171${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}Maintainerr: http://${IP}:6246${CL}"

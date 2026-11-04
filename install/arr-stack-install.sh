@@ -61,6 +61,9 @@ msg_ok "Installed Seerr"
 # shellcheck disable=SC1090
 source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
 
+# shellcheck disable=SC1090
+source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/maintainerr-install.sh)
+
 msg_info "Creating Sonarr Service"
 cat <<EOF >/etc/systemd/system/sonarr.service
 [Unit]
@@ -115,6 +118,8 @@ Type=exec
 WorkingDirectory=/opt/seerr
 Environment=CONFIG_DIRECTORY=/var/lib/seerr
 ExecStart=/usr/bin/node /opt/seerr/dist/index.js
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
