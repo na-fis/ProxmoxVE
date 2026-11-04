@@ -62,7 +62,7 @@ msg_ok "Installed Seerr"
 source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
 
 # shellcheck disable=SC1090
-source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/maintainerr-install.sh)
+source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/arr-maintainerr-install.sh)
 
 msg_info "Creating Sonarr Service"
 cat <<EOF >/etc/systemd/system/sonarr.service

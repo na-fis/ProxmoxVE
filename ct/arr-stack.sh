@@ -158,7 +158,7 @@ function update_script() {
     else
         msg_info "Installing Maintainerr (New Component)"
         # shellcheck disable=SC1090
-        source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/maintainerr-install.sh)
+        source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/arr-maintainerr-install.sh)
     fi
     
     exit
