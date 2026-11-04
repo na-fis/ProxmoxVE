@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: TuroYT
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/TuroYT/snowshare
@@ -13,20 +13,22 @@ setting_up_container
 network_check
 update_os
 
-NODE_VERSION="22" setup_nodejs
+NODE_VERSION="24" setup_nodejs
 PG_VERSION="17" setup_postgresql
 PG_DB_USER="snowshare" PG_DB_NAME="snowshare" setup_postgresql_db
-fetch_and_deploy_gh_release "snowshare" "TuroYT/snowshare"
+fetch_and_deploy_gh_release "snowshare" "TuroYT/snowshare" "tarball"
 
 msg_info "Installing SnowShare"
 cd /opt/snowshare
 $STD npm ci
+mkdir -p /opt/snowshare_data
 cat <<EOF >/opt/snowshare.env
 DATABASE_URL="postgresql://$PG_DB_USER:$PG_DB_PASS@localhost:5432/$PG_DB_NAME"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="$(openssl rand -base64 32)"
 ALLOW_SIGNUP=true
 NODE_ENV=production
+UPLOAD_DIR=/opt/snowshare_data
 EOF
 set -a
 source /opt/snowshare.env

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://hyperion-project.org/forum/
@@ -24,6 +24,12 @@ msg_ok "Set up Hyperion repository"
 
 msg_info "Installing Hyperion"
 $STD apt install -y hyperion
+mkdir -p /etc/systemd/system/hyperion@.service.d
+cat <<EOF >/etc/systemd/system/hyperion@.service.d/override.conf
+[Unit]
+Requisite=
+EOF
+systemctl daemon-reload
 systemctl enable -q --now hyperion@root
 msg_ok "Installed Hyperion"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: prop4n
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://docs.sonarsource.com/sonarqube-server
@@ -17,11 +17,10 @@ PG_VERSION="17" setup_postgresql
 PG_DB_NAME="sonarqube" PG_DB_USER="sonarqube" setup_postgresql_db
 
 msg_info "Setting up SonarQube"
-temp_file=$(mktemp)
-RELEASE=$(get_latest_github_release "SonarSource/sonarqube")
-curl -fsSL "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${RELEASE}.zip" -o $temp_file
-unzip -q "$temp_file" -d /opt
-mv /opt/sonarqube-* /opt/sonarqube
+RELEASE=$(curl -s "https://binaries.sonarsource.com/s3api?prefix=Distribution/sonarqube/sonarqube-&delimiter=/" |
+  grep -oP 'sonarqube-[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\.zip' |
+  sort -V | tail -n1)
+fetch_and_deploy_from_url "https://binaries.sonarsource.com/Distribution/sonarqube/${RELEASE}" /opt/sonarqube
 $STD useradd -r -m -U -d /opt/sonarqube -s /bin/bash sonarqube
 chown -R sonarqube:sonarqube /opt/sonarqube
 chmod -R 755 /opt/sonarqube

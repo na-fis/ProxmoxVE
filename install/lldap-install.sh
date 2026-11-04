@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # Co-Author: remz1337
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -29,7 +29,7 @@ URIs: http://download.opensuse.org/repositories/home:/Masgalor:/LLDAP/${DISTRO}_
 Suites: /
 Signed-By: /usr/share/keyrings/home_Masgalor_LLDAP.gpg
 EOF
-$STD apt update
+apt_update_safe
 $STD apt install -y lldap
 systemctl enable -q --now lldap
 msg_ok "Installed lldap"

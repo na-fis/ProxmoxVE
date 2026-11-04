@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/TriliumNext/Trilium
@@ -13,7 +13,7 @@ setting_up_container
 network_check
 update_os
 
-fetch_and_deploy_gh_release "Trilium" "TriliumNext/Trilium" "prebuild" "latest" "/opt/trilium" "TriliumNotes-Server-*linux-x64.tar.xz"
+fetch_and_deploy_gh_release "Trilium" "TriliumNext/Trilium" "prebuild" "latest" "/opt/trilium" "TriliumNotes-Server-*linux-$(arch_resolve "x64" "arm64").tar.xz" "v"
 
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/trilium.service

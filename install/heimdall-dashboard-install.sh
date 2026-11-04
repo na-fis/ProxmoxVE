@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://heimdall.site/
+# Source: https://heimdall.site/ | Github: https://github.com/linuxserver/Heimdall
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -17,14 +17,15 @@ msg_info "Installing Dependencies"
 $STD apt install -y apt-transport-https
 msg_ok "Installed Dependencies"
 
-PHP_VERSION="8.4" PHP_MODULE="bz2,sqlite3" PHP_FPM="YES" setup_php
+PHP_VERSION="8.4" PHP_FPM="YES" setup_php
 setup_composer
 fetch_and_deploy_gh_release "Heimdall" "linuxserver/Heimdall" "tarball"
 
 msg_info "Setting up Heimdall-Dashboard"
 cd /opt/Heimdall
 cp .env.example .env
-$STD php artisan key:generate
+sed -i 's/^APP_ENV=.*/APP_ENV=production/' .env
+$STD php artisan key:generate --force
 msg_ok "Setup Heimdall-Dashboard"
 
 msg_info "Creating Service"

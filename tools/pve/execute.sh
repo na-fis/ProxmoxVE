@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: jeroenzwart
 # License: MIT
 # https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 
 function header_info() {
-  clear
+  clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
   cat <<"EOF"
      ______                     __          __   _  ________
    / ____/  _____  _______  __/ /____     / /  | |/ / ____/
@@ -22,6 +22,11 @@ RD=$(echo "\033[01;31m")
 CM='\xE2\x9C\x94\033'
 GN=$(echo "\033[1;92m")
 CL=$(echo "\033[m")
+
+# Telemetry
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/api/api.func") 2>/dev/null || true
+declare -f init_tool_telemetry &>/dev/null && init_tool_telemetry "execute-lxcs" "pve"
+
 header_info
 echo "Loading..."
 whiptail --backtitle "Proxmox VE Helper Scripts" --title "Proxmox VE LXC Execute" --yesno "This will execute a command inside selected LXC Containers. Proceed?" 10 58
@@ -40,7 +45,6 @@ if [ $? -ne 0 ]; then
   exit
 fi
 
-
 read -r -p "Enter here command for inside the containers: " custom_command
 
 header_info
@@ -50,12 +54,11 @@ function execute_in() {
   container=$1
   name=$(pct exec "$container" hostname)
   echo -e "${BL}[Info]${GN} Execute inside${BL} ${name}${GN} with output: ${CL}"
-    if !   pct exec "$container" -- bash -c "command ${custom_command} >/dev/null 2>&1"
-      then
-        echo -e "${BL}[Info]${GN} Skipping ${name} ${RD}$container has no command: ${custom_command}"
-      else
-        pct exec "$container" -- bash -c "${custom_command}" | tee
-    fi
+  if ! pct exec "$container" -- bash -c "command ${custom_command} >/dev/null 2>&1"; then
+    echo -e "${BL}[Info]${GN} Skipping ${name} ${RD}$container has no command: ${custom_command}"
+  else
+    pct exec "$container" -- bash -c "${custom_command}" | tee
+  fi
 }
 
 for container in $(pct list | awk '{if(NR>1) print $1}'); do
@@ -64,7 +67,7 @@ for container in $(pct list | awk '{if(NR>1) print $1}'); do
   else
     os=$(pct config "$container" | awk '/^ostype/ {print $2}')
     if [ "$os" != "debian" ] && [ "$os" != "ubuntu" ]; then
-      echo -e "${BL}[Info]${GN} Skipping ${name} ${RD}$container is not Debian or Ubuntu ${CL}"
+      echo -e "${BL}[Info]${GN} Skipping ${RD}$container is not Debian or Ubuntu ${CL}"
       continue
     fi
 

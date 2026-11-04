@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck
 # Co-Author: MickLesk (Canbiz)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -21,7 +21,7 @@ setup_deb822_repo \
   "https://dl.evcc.io/public/evcc/stable/deb/debian/" \
   "$(get_os_info codename)" \
   "main"
-$STD apt update
+apt_update_safe
 msg_ok "evcc Repository setup sucessfully"
 
 msg_info "Installing evcc"

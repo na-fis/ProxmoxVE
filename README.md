@@ -1,268 +1,246 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/images/logo-81x112.png" height="120px" alt="Proxmox VE Helper-Scripts Logo" />
-  
-  <h1>Proxmox VE Helper-Scripts</h1>
-  <p><em>A Community Legacy in Memory of @tteck</em></p>
+  <a href=".github/assets/community-scripts.svg"><img src=".github/assets/community-scripts.png" width="112" height="112" alt="Community Scripts — Proxmox VE logo" /></a>
+  <!-- Editable artwork: .github/assets/community-scripts.svg; PNG export: 512 × 512. -->
+
+  <h1>Community Scripts — Proxmox VE</h1>
+  <p><strong>One-command installations for services, containers and VMs on Proxmox VE</strong><br/>
+  A community project — built on the foundation of <a href="https://github.com/tteck">@tteck</a>'s original work</p>
 
   <p>
-    <a href="https://helper-scripts.com">
-      <img src="https://img.shields.io/badge/🌐_Website-Visit-4c9b3f?style=for-the-badge&labelColor=2d3748" alt="Website" />
-    </a>
-    <a href="https://discord.gg/3AnUqsXnmK">
-      <img src="https://img.shields.io/badge/💬_Discord-Join-7289da?style=for-the-badge&labelColor=2d3748" alt="Discord" />
-    </a>
-    <a href="https://ko-fi.com/community_scripts">
-      <img src="https://img.shields.io/badge/❤️_Support-Donate-FF5F5F?style=for-the-badge&labelColor=2d3748" alt="Donate" />
-    </a>
+    <a href="https://community-scripts.org"><img src="https://img.shields.io/badge/Website-community--scripts.org-4c9b3f?style=flat-square" alt="Website" /></a>
+    <a href="https://discord.gg/3AnUqsXnmK"><img src="https://img.shields.io/badge/Discord-Join_us-7289da?style=flat-square&logo=discord&logoColor=white" alt="Discord" /></a>
+    <a href="https://github.com/community-scripts/ProxmoxVE/stargazers"><img src="https://img.shields.io/github/stars/community-scripts/ProxmoxVE?style=flat-square&label=Stars&color=f5a623" alt="Stars" /></a>
+    <a href="https://github.com/community-scripts/ProxmoxVE/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-view-6c5ce7?style=flat-square" alt="Changelog" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" /></a>
   </p>
-
-  <p>
-    <a href="https://github.com/community-scripts/ProxmoxVE/blob/main/docs/contribution/README.md">
-      <img src="https://img.shields.io/badge/🤝_Contribute-Guidelines-ff4785?style=for-the-badge&labelColor=2d3748" alt="Contribute" />
-    </a>
-    <a href="https://github.com/community-scripts/ProxmoxVE/blob/main/docs/contribution/USER_SUBMITTED_GUIDES.md">
-      <img src="https://img.shields.io/badge/📚_Guides-Read-0077b5?style=for-the-badge&labelColor=2d3748" alt="Guides" />
-    </a>
-    <a href="https://github.com/community-scripts/ProxmoxVE/blob/main/CHANGELOG.md">
-      <img src="https://img.shields.io/badge/📋_Changelog-View-6c5ce7?style=for-the-badge&labelColor=2d3748" alt="Changelog" />
-    </a>
-  </p>
-
-  <br />
-
- **Simplify your Proxmox VE setup with community-driven automation scripts**  
- Originally created by tteck, now maintained and expanded by the community
-
-</div>
-
-<br />
-
-<div align="center">
-  <sub>🙌 <strong>Shoutout to</strong></sub>
-  <br />
-  <br />
-  <a href="https://selfh.st/">
-    <img src="https://img.shields.io/badge/selfh.st-Icons_for_Self--Hosted-2563eb?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LThzMy41OS04IDgtOCA4IDMuNTkgOCA4LTMuNTkgOC04IDh6IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==&labelColor=1e3a8a" alt="selfh.st Icons" />
-  </a>
-  <br />
-  <sub><a href="https://github.com/selfhst/icons">View on GitHub</a> • Consistent, beautiful icons for 5000+ self-hosted apps</sub>
 </div>
 
 ---
 
-## 🎯 Key Features
+## What is this?
 
-<div align="center">
+**The canonical application scripts.** More than 700 of them, covering home
+automation, media, networking, databases, monitoring, security and developer
+tooling. Paste one command into your Proxmox shell and the container or VM is
+built, configured and running.
 
-<table>
-  <tr>
-    <td align="center" width="25%">
-      <h3>⚡ Quick Setup</h3>
-      <p>One-command installations for popular services and containers</p>
-    </td>
-    <td align="center" width="25%">
-      <h3>⚙️ Flexible Config</h3>
-      <p>Simple mode for beginners, advanced options for power users</p>
-    </td>
-    <td align="center" width="25%">
-      <h3>🔄 Auto Updates</h3>
-      <p>Keep your installations current with built-in update mechanisms</p>
-    </td>
-    <td align="center" width="25%">
-      <h3>🛠️ Easy Management</h3>
-      <p>Post-install scripts for configuration and troubleshooting</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="25%">
-      <h3>👥 Community Driven</h3>
-      <p>Actively maintained with contributions from users worldwide</p>
-    </td>
-    <td align="center" width="25%">
-      <h3>📖 Well Documented</h3>
-      <p>Comprehensive guides and community support</p>
-    </td>
-    <td align="center" width="25%">
-      <h3>🔒 Secure</h3>
-      <p>Regular security updates and best practices</p>
-    </td>
-    <td align="center" width="25%">
-      <h3>⚡ Performance</h3>
-      <p>Optimized configurations for best performance</p>
-    </td>
-  </tr>
-</table>
+A script only describes *what* to install. Creating the container, asking the
+questions and handling the errors is the job of the shared engine in
+[core](https://github.com/community-scripts/core), which every script loads at
+start-up. The same scripts run unchanged on an Incus host through
+[the Incus repository](https://github.com/community-scripts/Incus).
 
-</div>
+Ready-made commands for every application are on
+[community-scripts.org](https://community-scripts.org).
 
 ---
 
-## 📋 Requirements
+## Getting started
 
-<div align="center">
+1. Go to **[community-scripts.org](https://community-scripts.org)**
+2. Search for the service you want — Home Assistant, Nginx Proxy Manager, Jellyfin
+3. Copy the one-line install command from the script page
+4. Open your **Proxmox shell** and paste it
+5. Choose **Default** or **Advanced** and follow the prompts
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <h3>🖥️ Proxmox VE</h3>
-      <p>Version: 8.4.x | 9.0.x | 9.1.x</p>
-    </td>
-    <td align="center" width="33%">
-      <h3>🐧 Operating System</h3>
-      <p>Debian-based with Proxmox Tools</p>
-    </td>
-    <td align="center" width="33%">
-      <h3>🌐 Network</h3>
-      <p>Internet connection required</p>
-    </td>
-  </tr>
-</table>
+Each script page lists what the container includes, the default resources and
+the post-install notes.
 
-</div>
+> These commands run as root on your host. Every script is readable in this
+> repository, and each script page links to its source — read it before you
+> paste it, as you would with any installer.
 
 ---
 
-## 📥 Getting Started
+## How scripts work
 
-Choose your preferred installation method:
+**Default** picks sensible resources and asks only what it has to. Most installs
+finish in a few minutes.
 
-### Method 1: One-Click Web Installer
+**Advanced** hands you container settings, networking, storage backend and
+application options before anything is created.
 
-The fastest way to get started:
-
-1. Visit **[helper-scripts.com](https://helper-scripts.com/)** 🌐
-2. Search for your desired script (e.g., "Home Assistant", "Docker")
-3. Copy the bash command displayed on the script page
-4. Open your **Proxmox Shell** and paste the command
-5. Press Enter and follow the interactive prompts
-
-### Method 2: PVEScripts-Local
-
-Install a convenient script manager directly in your Proxmox UI:
+Every container gets an `update` command. Type it in the container console:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/pve-scripts-local.sh)"
+update
 ```
 
-This adds a menu to your Proxmox interface for easy script access without visiting the website.
-
-📖 **Learn more:** [ProxmoxVE-Local Repository](https://github.com/community-scripts/ProxmoxVE-Local)
+It updates the installed application and reaches settings that would otherwise
+mean editing config files by hand. VM scripts have no built-in updater — use the
+guest's own package manager.
 
 ---
 
-## 💬 Join the Community
+## Requirements
 
-<div align="center">
+| Component | Details |
+| --------- | ------- |
+| **Proxmox VE** | 8.0 – 8.4, or 9.0 – 9.2 |
+| **Access** | Root shell on the Proxmox host |
+| **Network** | Internet access during installation |
 
-<table>
+Virtual machine scripts need the same versions as containers.
+
+---
+
+## Repository map
+
+| Repository | Contains |
+| ---------- | -------- |
+| [core](https://github.com/community-scripts/core) | The engine — container and VM creation, the wizard, error handling |
+| **ProxmoxVE** (this repo) | Canonical application scripts, plus `tools/pve/`, `vm/` and `turnkey/` |
+| [Incus](https://github.com/community-scripts/Incus) | The same scripts on an Incus host, plus Incus VMs and host tooling |
+| [DevScripts](https://github.com/community-scripts/DevScripts) | Where new scripts are tested before they land here |
+
+---
+
+## Layout
+
+| Folder | Contents |
+| ------ | -------- |
+| `ct/` | Application scripts — the command you paste |
+| `install/` | What each script installs inside the container |
+| `vm/` | Virtual machine scripts |
+| `tools/pve/` | Host tooling: post-install, hardware passthrough, maintenance |
+| `turnkey/` | TurnKey Linux appliance helper |
+
+Application metadata — name, description, logo, tags — is managed on the website,
+not in this repository. Use the **Report Issue** link on any script page to
+request a change.
+
+---
+
+## Testing a fork or branch
+
+Engine and scripts resolve independently, so either can point somewhere else.
+Put the variable on the command itself — nothing needs exporting.
+
+To run your own copy of the scripts:
+
+```bash
+COMMUNITY_SCRIPTS_URL=https://raw.githubusercontent.com/YOU/ProxmoxVE/my-branch \
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/YOU/ProxmoxVE/my-branch/ct/debian.sh)"
+```
+
+A `ct/` script fetched with `curl` cannot tell the engine where it came from, so
+without that variable it would look for its `install/` half upstream.
+
+Only when you are changing the engine itself:
+
+```bash
+COMMUNITY_SCRIPTS_CORE_URL=https://raw.githubusercontent.com/YOU/core/my-branch \
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/debian.sh)"
+```
+
+A local checkout of core wins over both — point at it with
+`COMMUNITY_SCRIPTS_CORE_DIR`.
+
+---
+
+## Contributing
+
+This project runs on community contributions. New scripts, fixes, bug reports —
+all of it helps.
+
+| I want to… | Go here |
+| ---------- | ------- |
+| Add a **new** script | [DevScripts](https://github.com/community-scripts/DevScripts) — new scripts are tested there first |
+| Fix or improve an **existing** script | [Contributing Guidelines](CONTRIBUTING.md) — open a PR here |
+| Change how containers are built | [core](https://github.com/community-scripts/core) |
+| Report a bug or a broken script | [Issues](https://github.com/community-scripts/ProxmoxVE/issues) |
+| Request a script or a feature | [Discussions](https://github.com/community-scripts/ProxmoxVE/discussions) |
+| Report a security vulnerability | [Security Policy](SECURITY.md) |
+| Ask a question | [Discord](https://discord.gg/3AnUqsXnmK) |
+
+### Before you open a PR
+
+- **New scripts go to [DevScripts](https://github.com/community-scripts/DevScripts), not here.** PRs adding new scripts to this repository will be closed.
+- Keep a PR to one fix or one feature.
+- A bug that also happens on Incus is an application or engine bug — say so in the report.
+- Read the [Contributing Guidelines](CONTRIBUTING.md) before your first PR.
+
+---
+
+## Core Team
+
+<table align="center">
   <tr>
-    <td align="center" width="33%">
-      <h3>💬 Discord</h3>
-      <p>Real-time chat, support, and discussions</p>
-      <a href="https://discord.gg/3AnUqsXnmK">
-        <img src="https://img.shields.io/badge/Join-7289da?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
+    <td align="center">
+      <a href="https://github.com/MickLesk">
+        <img src="https://github.com/MickLesk.png" width="80" height="80" style="border-radius:50%" alt="MickLesk" /><br/>
+        <sub><b>MickLesk</b></sub>
       </a>
     </td>
-    <td align="center" width="33%">
-      <h3>💭 Discussions</h3>
-      <p>Feature requests, Q&A, and ideas</p>
-      <a href="https://github.com/community-scripts/ProxmoxVE/discussions">
-        <img src="https://img.shields.io/badge/Discuss-238636?style=for-the-badge&logo=github&logoColor=white" alt="Discussions" />
+    <td align="center">
+      <a href="https://github.com/michelroegl-brunner">
+        <img src="https://github.com/michelroegl-brunner.png" width="80" height="80" style="border-radius:50%" alt="michelroegl-brunner" /><br/>
+        <sub><b>michelroegl-brunner</b></sub>
       </a>
     </td>
-    <td align="center" width="33%">
-      <h3>🐛 Issues</h3>
-      <p>Bug reports and issue tracking</p>
-      <a href="https://github.com/community-scripts/ProxmoxVE/issues">
-        <img src="https://img.shields.io/badge/Report-d73a4a?style=for-the-badge&logo=github&logoColor=white" alt="Issues" />
+    <td align="center">
+      <a href="https://github.com/BramSuurdje">
+        <img src="https://github.com/BramSuurdje.png" width="80" height="80" style="border-radius:50%" alt="BramSuurdje" /><br/>
+        <sub><b>BramSuurdje</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/CrazyWolf13">
+        <img src="https://github.com/CrazyWolf13.png" width="80" height="80" style="border-radius:50%" alt="CrazyWolf13" /><br/>
+        <sub><b>CrazyWolf13</b></sub>
       </a>
     </td>
   </tr>
-</table>
-
-</div>
-
----
-
-## 🛠️ Contribute
-
-<div align="center">
-
-<table>
   <tr>
-    <td align="center" width="25%">
-      <h3>💻 Code</h3>
-      <p>Add new scripts or improve existing ones</p>
+    <td align="center">
+      <a href="https://github.com/tremor021">
+        <img src="https://github.com/tremor021.png" width="80" height="80" style="border-radius:50%" alt="tremor021" /><br/>
+        <sub><b>tremor021</b></sub>
+      </a>
     </td>
-    <td align="center" width="25%">
-      <h3>📝 Documentation</h3>
-      <p>Write guides, improve READMEs, translate content</p>
+    <td align="center">
+      <a href="https://github.com/vhsdream">
+        <img src="https://github.com/vhsdream.png" width="80" height="80" style="border-radius:50%" alt="vhsdream" /><br/>
+        <sub><b>vhsdream</b></sub>
+      </a>
     </td>
-    <td align="center" width="25%">
-      <h3>🧪 Testing</h3>
-      <p>Test scripts and report compatibility issues</p>
+    <td align="center">
+      <a href="https://github.com/asylumexp">
+        <img src="https://github.com/asylumexp.png" width="80" height="80" style="border-radius:50%" alt="asylumexp" /><br/>
+        <sub><b>asylumexp</b></sub>
+      </a>
     </td>
-    <td align="center" width="25%">
-      <h3>💡 Ideas</h3>
-      <p>Suggest features or workflow improvements</p>
-    </td>
+    <td></td>
   </tr>
 </table>
 
-</div>
-
-<div align="center">
-  <br />
-  
-  👉 Check our **[Contributing Guidelines](https://github.com/community-scripts/ProxmoxVE/blob/main/docs/contribution/README.md)** to get started
-  
-</div>
-
 ---
 
-## ❤️ Support the Project
+## Project Activity
 
-This project is maintained by volunteers in memory of tteck. Your support helps us maintain infrastructure, improve documentation, and give back to important causes.
-
-**🎗️ 30% of all donations go directly to cancer research and hospice care**
-
-<div align="center">
-
-<a href="https://ko-fi.com/community_scripts">
-  <img src="https://img.shields.io/badge/☕_Buy_us_a_coffee-Support_on_Ko--fi-FF5F5F?style=for-the-badge&labelColor=2d3748" alt="Support on Ko-fi" />
-</a>
-
-<br />
-<sub>Every contribution helps keep this project alive and supports meaningful causes</sub>
-
-</div>
-
----
-
-## 📈 Project Statistics
 <p align="center">
   <img
     src="https://repobeats.axiom.co/api/embed/57edde03e00f88d739bdb5b844ff7d07dd079375.svg"
-    alt="Repobeats analytics"
-    width="650"
+    alt="Repository activity"
+    width="700"
   />
 </p>
 
 <p align="center">
-  <a href="https://star-history.com/#community-scripts/ProxmoxVE&Date">
+  <a href="https://www.star-history.com/?repos=community-scripts%2FProxmoxVE&type=date&legend=top-left">
     <picture>
       <source
         media="(prefers-color-scheme: dark)"
-        srcset="https://api.star-history.com/svg?repos=community-scripts/ProxmoxVE&type=Date&theme=dark"
+        srcset="https://api.star-history.com/chart?repos=community-scripts/ProxmoxVE&type=date&theme=dark&legend=top-left&sealed_token=-lUy2KH6pJryUyLCbiWRwFz3ilXMDFVFHm0lJcqh-Hl5e0QNNKjINNcXzULhaZVpBugN_TDaxOawEAuzwBc5Sjqa2mCRw9K6TdCioKRDsS_qXUwhkLQSCMRSg1schCdl4rQD8qEj7PWBjin-fyHnDm7NnM6akZp59jndG7qV7PrvG8nLBgDIuuA-wAI3"
       />
       <source
         media="(prefers-color-scheme: light)"
-        srcset="https://api.star-history.com/svg?repos=community-scripts/ProxmoxVE&type=Date"
+        srcset="https://api.star-history.com/chart?repos=community-scripts/ProxmoxVE&type=date&legend=top-left&sealed_token=-lUy2KH6pJryUyLCbiWRwFz3ilXMDFVFHm0lJcqh-Hl5e0QNNKjINNcXzULhaZVpBugN_TDaxOawEAuzwBc5Sjqa2mCRw9K6TdCioKRDsS_qXUwhkLQSCMRSg1schCdl4rQD8qEj7PWBjin-fyHnDm7NnM6akZp59jndG7qV7PrvG8nLBgDIuuA-wAI3"
       />
       <img
         alt="Star History Chart"
-        src="https://api.star-history.com/svg?repos=community-scripts/ProxmoxVE&type=Date"
-        width="650"
+        src="https://api.star-history.com/chart?repos=community-scripts/ProxmoxVE&type=date&legend=top-left&sealed_token=-lUy2KH6pJryUyLCbiWRwFz3ilXMDFVFHm0lJcqh-Hl5e0QNNKjINNcXzULhaZVpBugN_TDaxOawEAuzwBc5Sjqa2mCRw9K6TdCioKRDsS_qXUwhkLQSCMRSg1schCdl4rQD8qEj7PWBjin-fyHnDm7NnM6akZp59jndG7qV7PrvG8nLBgDIuuA-wAI3"
+        width="700"
       />
     </picture>
   </a>
@@ -270,14 +248,35 @@ This project is maintained by volunteers in memory of tteck. Your support helps 
 
 ---
 
-## 📜 License
+## Support the Project
 
-This project is licensed under the **[MIT License](LICENSE)** - feel free to use, modify, and distribute.
+This project is maintained by volunteers. Infrastructure costs come out of
+pocket and the work happens in people's spare time.
+
+**30% of all donations are forwarded directly to cancer research and hospice
+care** — a cause that was important to tteck.
+
+<div align="center">
+  <a href="https://ko-fi.com/community_scripts">
+    <img src="https://img.shields.io/badge/Support_on_Ko--fi-FF5F5F?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support on Ko-fi" />
+  </a>
+  &nbsp;
+  <a href="https://community-scripts.org/donate">
+    <img src="https://img.shields.io/badge/Donate-community--scripts.org%2Fdonate-4c9b3f?style=for-the-badge" alt="Donate via community-scripts.org" />
+  </a>
+</div>
+
+---
+
+## License
+
+MIT — free to use, modify and redistribute, for personal and commercial
+purposes. See [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
-  <sub>Made with ❤️ by the Proxmox community in memory of tteck</sub>
-  <br />
-  <sub><i>Proxmox® is a registered trademark of <a href="https://www.proxmox.com/en/about/company">Proxmox Server Solutions GmbH</a></i></sub>
+  <sub>Built on the foundation of <a href="https://github.com/tteck">tteck</a>'s original work · <a href="https://github.com/tteck/Proxmox">Original Repository</a></sub><br/>
+  <sub>Maintained and expanded by the community · In memory of tteck</sub><br/>
+  <sub><i>This is an independent community project. <b>Proxmox</b>® is a registered trademark of <a href="https://www.proxmox.com/en/about/company">Proxmox Server Solutions GmbH</a>.</i></sub>
 </div>

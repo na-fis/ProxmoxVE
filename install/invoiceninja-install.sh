@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://invoiceninja.com/
+# Source: https://invoiceninja.com/ | Github: https://github.com/invoiceninja/invoiceninja
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -15,28 +15,28 @@ update_os
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
-    nginx \
-    supervisor \
-    libnss3 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
-    libpango-1.0-0 \
-    libcairo2
+  nginx \
+  supervisor \
+  libnss3 \
+  libatk1.0-0 \
+  libatk-bridge2.0-0 \
+  libcups2 \
+  libdrm2 \
+  libxkbcommon0 \
+  libxcomposite1 \
+  libxdamage1 \
+  libxfixes3 \
+  libxrandr2 \
+  libgbm1 \
+  libasound2 \
+  libpango-1.0-0 \
+  libcairo2
 msg_ok "Installed Dependencies"
 
 setup_mariadb
 MARIADB_DB_NAME="invoiceninja" MARIADB_DB_USER="invoiceninja" setup_mariadb_db
-PHP_VERSION="8.4" PHP_FPM="YES" PHP_MODULE="bcmath,curl,gd,gmp,imagick,intl,mbstring,mysql,soap,xml,zip" setup_php
-import_local_ip
+PHP_VERSION="8.4" PHP_FPM="YES" PHP_MODULE="soap" setup_php
+
 fetch_and_deploy_gh_release "invoiceninja" "invoiceninja/invoiceninja" "prebuild" "latest" "/opt/invoiceninja" "invoiceninja.tar.gz"
 
 msg_info "Configuring InvoiceNinja"
@@ -86,7 +86,8 @@ EOF
 mkdir -p /opt/invoiceninja/bootstrap/cache
 mkdir -p /opt/invoiceninja/storage/{app/public,framework/{cache/data,sessions,views},logs}
 chown -R www-data:www-data /opt/invoiceninja
-chmod -R 775 /opt/invoiceninja/storage /opt/invoiceninja/bootstrap/cache
+chown -R www-data:www-data /opt/invoiceninja/storage
+chown -R www-data:www-data /opt/invoiceninja/bootstrap/cache
 msg_ok "Configured InvoiceNinja"
 
 msg_info "Downloading Chromium for PDF Generation"
@@ -105,9 +106,11 @@ $STD php artisan migrate --force
 $STD php artisan db:seed --force
 $STD php artisan ninja:post-update
 $STD php artisan optimize
+chown -R www-data:www-data /opt/invoiceninja
 msg_ok "Set up Database"
 
 msg_info "Configuring Nginx"
+PHP_SOCK=$(get_php_fpm_socket)
 cat <<'EOF' >/etc/nginx/sites-available/invoiceninja
 server {
     listen 8080;
@@ -128,9 +131,11 @@ server {
     }
 
     location = /index.php {
-        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+        fastcgi_pass unix:__PHP_SOCK__;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
+        fastcgi_param HTTP_X_FORWARDED_HOST $http_host;
+        fastcgi_param HTTP_X_FORWARDED_PROTO $scheme;
         fastcgi_read_timeout 300;
     }
 
@@ -147,9 +152,8 @@ server {
 }
 EOF
 
-ln -sf /etc/nginx/sites-available/invoiceninja /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-$STD systemctl reload nginx
+sed -i "s|__PHP_SOCK__|${PHP_SOCK}|" /etc/nginx/sites-available/invoiceninja
+nginx_enable_site invoiceninja
 msg_ok "Configured Nginx"
 
 msg_info "Setting up Queue Worker"

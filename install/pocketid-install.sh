@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Snarkenfaugister
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/pocket-id/pocket-id
@@ -13,10 +13,14 @@ setting_up_container
 network_check
 update_os
 
-read -r -p "${TAB3}What public URL do you want to use (e.g. pocketid.mydomain.com)? " public_url
-fetch_and_deploy_gh_release "pocket-id" "pocket-id/pocket-id" "singlefile" "latest" "/opt/pocket-id/" "pocket-id-linux-amd64"
+public_url="${var_pocketid_url:-}"
+[[ -n "$public_url" ]] || read -r -p "${TAB3}What public URL do you want to use (e.g. pocketid.mydomain.com)? " public_url || true
+[[ -n "$public_url" ]] || { msg_error "No public URL given; set var_pocketid_url or answer the prompt"; exit 64; }
+fetch_and_deploy_gh_release "pocket-id" "pocket-id/pocket-id" "singlefile" "latest" "/opt/pocket-id/" "pocket-id_linux_$(arch_resolve)"
 
 msg_info "Configuring Pocket ID"
+ENCRYPTION_KEY=$(openssl rand -base64 32)
+
 cat <<EOF >/opt/pocket-id/.env
 APP_ENV=production
 APP_URL=https://${public_url}
@@ -24,6 +28,7 @@ TRUST_PROXY=false
 # MAXMIND_LICENSE_KEY=
 PORT=1411
 HOST=0.0.0.0
+ENCRYPTION_KEY=${ENCRYPTION_KEY}
 EOF
 msg_ok "Configured Pocket ID"
 

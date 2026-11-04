@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://home.tdarr.io/
@@ -20,12 +20,16 @@ msg_ok "Installed Dependencies"
 msg_info "Installing Tdarr"
 mkdir -p /opt/tdarr
 cd /opt/tdarr
-RELEASE=$(curl -fsSL https://f000.backblazeb2.com/file/tdarrs/versions.json | grep -oP '(?<="Tdarr_Updater": ")[^"]+' | grep linux_x64 | head -n 1)
-curl -fsSL "$RELEASE" -o Tdarr_Updater.zip
-$STD unzip Tdarr_Updater.zip
+RELEASE=$(curl_with_retry "https://f000.backblazeb2.com/file/tdarrs/versions.json" "-" | grep -oP '(?<="Tdarr_Updater": ")[^"]+' | grep "linux_$(arch_resolve "x64" "arm64")" | head -n 1)
+curl_with_retry "$RELEASE" "Tdarr_Updater.zip"
+$STD unzip -o Tdarr_Updater.zip
 chmod +x Tdarr_Updater
 $STD ./Tdarr_Updater
 rm -rf /opt/tdarr/Tdarr_Updater.zip
+[[ -f /opt/tdarr/Tdarr_Server/Tdarr_Server ]] || {
+  msg_error "Tdarr_Updater failed — tdarr.io may be blocked by local DNS"
+  exit 250
+}
 msg_ok "Installed Tdarr"
 
 setup_hwaccel
@@ -43,8 +47,9 @@ User=root
 Group=root
 Type=simple
 WorkingDirectory=/opt/tdarr/Tdarr_Server
-ExecStartPre=/opt/tdarr/Tdarr_Updater
+ExecStartPre=-/opt/tdarr/Tdarr_Updater
 ExecStart=/opt/tdarr/Tdarr_Server/Tdarr_Server
+TimeoutStartSec=600
 TimeoutStopSec=20
 KillMode=process
 Restart=on-failure

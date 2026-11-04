@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck
 # Co-Author: MickLesk (Canbiz)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -14,15 +14,17 @@ setting_up_container
 network_check
 update_os
 
-fetch_and_deploy_gh_release "homebox" "sysadminsmedia/homebox" "prebuild" "latest" "/opt/homebox" "homebox_Linux_x86_64.tar.gz"
+fetch_and_deploy_gh_release "homebox" "sysadminsmedia/homebox" "prebuild" "latest" "/opt/homebox" "homebox_Linux_$(arch_resolve "x86_64" "arm64").tar.gz"
 
 msg_info "Configuring Homebox"
 chmod +x /opt/homebox/homebox
+AUTH_KEY="$(random_password 32)"
 cat <<EOF >/opt/homebox/.env
 # For possible environment variables check here: https://homebox.software/en/configure-homebox
 HBOX_MODE=production
 HBOX_WEB_PORT=7745
 HBOX_WEB_HOST=0.0.0.0
+HBOX_AUTH_API_KEY_PEPPER=${AUTH_KEY}
 EOF
 msg_ok "Configured Homebox"
 

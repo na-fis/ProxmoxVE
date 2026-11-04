@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Slaviša Arežina (tremor021)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/VictoriaMetrics/VictoriaMetrics
@@ -14,26 +14,30 @@ network_check
 update_os
 
 msg_info "Getting latest version of VictoriaMetrics"
-victoriametrics_filename=$(curl -fsSL "https://api.github.com/repos/VictoriaMetrics/VictoriaMetrics/releases/latest" |
-  jq -r '.assets[].name' |
-  grep -E '^victoria-metrics-linux-amd64-v[0-9.]+\.tar\.gz$')
-vmutils_filename=$(curl -fsSL "https://api.github.com/repos/VictoriaMetrics/VictoriaMetrics/releases/latest" |
-  jq -r '.assets[].name' |
-  grep -E '^vmutils-linux-amd64-v[0-9.]+\.tar\.gz$')
-msg_ok "Got latest version of VictoriaMetrics"
 
-fetch_and_deploy_gh_release "victoriametrics" "VictoriaMetrics/VictoriaMetrics" "prebuild" "latest" "/opt/victoriametrics" "$victoriametrics_filename"
-fetch_and_deploy_gh_release "vmutils" "VictoriaMetrics/VictoriaMetrics" "prebuild" "latest" "/opt/victoriametrics" "$vmutils_filename"
+vm_releases_json="$(mktemp)"
+github_api_call "https://api.github.com/repos/VictoriaMetrics/VictoriaMetrics/releases" "$vm_releases_json"
+victoriametrics_release=$(jq -r --arg a "$(arch_resolve)" '.[] | select(.assets[].name | match("^victoria-metrics-linux-" + $a + "-v[0-9.]+.tar.gz$")) | .tag_name' "$vm_releases_json" |
+  head -n 1)
+rm -f "$vm_releases_json"
+victoriametrics_filename="victoria-metrics-linux-$(arch_resolve)-${victoriametrics_release}.tar.gz"
+vmutils_filename="vmutils-linux-$(arch_resolve)-${victoriametrics_release}.tar.gz"
+msg_ok "Got version $victoriametrics_release of VictoriaMetrics"
 
-read -r -p "${TAB3}Would you like to add VictoriaLogs? <y/N> " prompt
+fetch_and_deploy_gh_release "victoriametrics" "VictoriaMetrics/VictoriaMetrics" "prebuild" "$victoriametrics_release" "/opt/victoriametrics" "$victoriametrics_filename"
+fetch_and_deploy_gh_release "vmutils" "VictoriaMetrics/VictoriaMetrics" "prebuild" "$victoriametrics_release" "/opt/victoriametrics" "$vmutils_filename"
+
+prompt="${var_victoriametrics_logs:-}"
+[[ -n "$prompt" ]] || read -r -p "${TAB3}Would you like to add VictoriaLogs? <y/N> " prompt || true
 
 if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
-  vmlogs_filename=$(curl -fsSL "https://api.github.com/repos/VictoriaMetrics/VictoriaLogs/releases/latest" |
-    jq -r '.assets[].name' |
-    grep -E '^victoria-logs-linux-amd64-v[0-9.]+\.tar\.gz$')
-  vlutils_filename=$(curl -fsSL "https://api.github.com/repos/VictoriaMetrics/VictoriaLogs/releases/latest" |
-    jq -r '.assets[].name' |
-    grep -E '^vlutils-linux-amd64-v[0-9.]+\.tar\.gz$')
+  vl_release_json="$(mktemp)"
+  github_api_call "https://api.github.com/repos/VictoriaMetrics/VictoriaLogs/releases/latest" "$vl_release_json"
+  vmlogs_filename=$(jq -r '.assets[].name' "$vl_release_json" |
+    grep -E "^victoria-logs-linux-$(arch_resolve)-v[0-9.]+\.tar\.gz$")
+  vlutils_filename=$(jq -r '.assets[].name' "$vl_release_json" |
+    grep -E "^vlutils-linux-$(arch_resolve)-v[0-9.]+\.tar\.gz$")
+  rm -f "$vl_release_json"
   fetch_and_deploy_gh_release "victorialogs" "VictoriaMetrics/VictoriaLogs" "prebuild" "latest" "/opt/victoriametrics" "$vmlogs_filename"
   fetch_and_deploy_gh_release "vlutils" "VictoriaMetrics/VictoriaLogs" "prebuild" "latest" "/opt/victoriametrics" "$vlutils_filename"
 fi

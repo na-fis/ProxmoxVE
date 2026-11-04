@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Slaviša Arežina (tremor021)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://minarca.org/en_CA
@@ -30,7 +30,7 @@ Components: main
 Architectures: amd64
 Signed-By: /usr/share/keyrings/minarca-keyring.gpg
 EOF
-$STD apt update
+apt_update_safe
 $STD apt install -y minarca-server
 msg_ok "Installed Minarca"
 

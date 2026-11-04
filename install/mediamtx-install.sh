@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/bluenviron/mediamtx
@@ -18,7 +18,7 @@ msg_info "Installing Dependencies"
 $STD apt install -y ffmpeg
 msg_ok "Installed Dependencies"
 
-fetch_and_deploy_gh_release "mediamtx" "bluenviron/mediamtx" "prebuild" "latest" "/opt/mediamtx" "mediamtx*linux_amd64.tar.gz"
+fetch_and_deploy_gh_release "mediamtx" "bluenviron/mediamtx" "prebuild" "latest" "/opt/mediamtx" "mediamtx*linux_$(arch_resolve).tar.gz"
 
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/mediamtx.service

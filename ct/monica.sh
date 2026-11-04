@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
-# Copyright (c) 2021-2025 community-scripts ORG
+_cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
+source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: bvdberg01
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://www.monicahq.com/
+# Source: https://www.monicahq.com/ | Github: https://github.com/monicahq/monica
 
 APP="Monica"
 var_tags="${var_tags:-network}"
@@ -12,6 +13,7 @@ var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
+var_arm64="${var_arm64:-yes}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,9 +29,14 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  setup_mariadb
 
+  setup_mariadb
   NODE_VERSION="22" NODE_MODULE="yarn@latest" setup_nodejs
+
+  # Fix for previous versions not having cronjob
+  if ! grep -Fq 'php /opt/monica/artisan schedule:run' /etc/crontab; then
+    echo '* * * * * root php /opt/monica/artisan schedule:run >> /dev/null 2>&1' >>/etc/crontab
+  fi
 
   if check_for_gh_release "monica" "monicahq/monica"; then
     msg_info "Stopping Service"
@@ -68,7 +75,7 @@ start
 build_container
 description
 
-msg_ok "Completed Successfully!\n"
+msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"
+echo -e "${INFO}${YW}Access it using the following URL:${CL}"
+echo -e "${GATEWAY}${BGN}http://${IP}${CL}"

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://radarr.video/
+# Source: https://radarr.video/ | Github: https://github.com/Radarr/Radarr
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -14,10 +14,10 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt install -y sqlite3
+$STD apt install -y sqlite3 libicu-dev
 msg_ok "Installed Dependencies"
 
-fetch_and_deploy_gh_release "Radarr" "Radarr/Radarr" "prebuild" "latest" "/opt/Radarr" "Radarr.master*linux-core-x64.tar.gz"
+fetch_and_deploy_gh_release "Radarr" "Radarr/Radarr" "prebuild" "latest" "/opt/Radarr" "Radarr.master*linux-core-$(arch_resolve "x64" "arm64").tar.gz"
 
 msg_info "Configuring Radarr"
 mkdir -p /var/lib/radarr/

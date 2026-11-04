@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://www.openhab.org/
@@ -33,7 +33,6 @@ chown -R openhab:openhab /var/lib/openhab /etc/openhab /var/log/openhab
 msg_ok "Initialized openHAB directories"
 
 msg_info "Starting Service"
-systemctl daemon-reload
 systemctl enable -q --now openhab
 msg_ok "Started Service"
 

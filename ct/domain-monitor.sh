@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
-# Copyright (c) 2021-2025 community-scripts ORG
+_cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
+source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Slaviša Arežina (tremor021)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/Hosteroid/domain-monitor
@@ -12,6 +13,7 @@ var_ram="${var_ram:-512}"
 var_disk="${var_disk:-2}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
+var_arm64="${var_arm64:-yes}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -29,18 +31,20 @@ function update_script() {
   fi
   setup_mariadb
 
-  if ! grep -Fq "root /usr/bin/php /opt/domain-monitor/cron/check_domains.php" /etc/crontab; then
-    echo "0 0 * * * root /usr/bin/php /opt/domain-monitor/cron/check_domains.php" >>/etc/crontab
+  if grep -Fq "root /usr/bin/php /opt/domain-monitor/cron/check_domains.php" /etc/crontab; then
+    sed -i 's|root /usr/bin/php /opt/domain-monitor/cron/check_domains.php|www-data /usr/bin/php /opt/domain-monitor/cron/check_domains.php|' /etc/crontab
+  fi
+
+  if ! grep -Fq "www-data /usr/bin/php /opt/domain-monitor/cron/check_domains.php" /etc/crontab; then
+    echo "0 0 * * * www-data /usr/bin/php /opt/domain-monitor/cron/check_domains.php" >>/etc/crontab
   fi
 
   if check_for_gh_release "domain-monitor" "Hosteroid/domain-monitor"; then
     msg_info "Stopping Service"
     systemctl stop apache2
-    msg_info "Service stopped"
+    msg_ok "Stopped Service"
 
-    msg_info "Creating backup"
-    mv /opt/domain-monitor/.env /opt
-    msg_ok "Created backup"
+    create_backup /opt/domain-monitor/.env
 
     setup_composer
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "domain-monitor" "Hosteroid/domain-monitor" "prebuild" "latest" "/opt/domain-monitor" "domain-monitor-v*.zip"
@@ -50,12 +54,11 @@ function update_script() {
     $STD composer install
     msg_ok "Updated Domain Monitor"
 
-    msg_info "Restoring backup"
-    mv /opt/.env /opt/domain-monitor
-    msg_ok "Restored backup"
+    restore_backup
+    chown -R www-data:www-data /opt/domain-monitor
 
     msg_info "Restarting Services"
-    systemctl reload apache2
+    systemctl start apache2
     msg_ok "Restarted Services"
     msg_ok "Updated successfully!"
   fi
@@ -66,7 +69,7 @@ start
 build_container
 description
 
-msg_ok "Completed Successfully!\n"
+msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"
+echo -e "${INFO}${YW}Access it using the following URL:${CL}"
+echo -e "${GATEWAY}${BGN}http://${IP}${CL}"

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: thost96 (thost96)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 
 header_info() {
-  clear
+  clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
   cat <<"EOF"
     ____  __  _________   ____             __     ____           __        ____
    / __ \/  |/  / ____/  / __ \____  _____/ /_   /  _/___  _____/ /_____ _/ / /
@@ -43,8 +43,18 @@ msg_error() {
   echo -e "${BFR} ${CROSS} ${RD}${msg}${CL}"
 }
 
-if ! grep -q "Proxmox Mail Gateway" /etc/issue 2>/dev/null; then
+# Telemetry
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/api/api.func") 2>/dev/null || true
+declare -f init_tool_telemetry &>/dev/null && init_tool_telemetry "post-pmg-install" "pve"
+
+if ! dpkg -s proxmox-mailgateway-container >/dev/null 2>&1 &&
+  ! dpkg -s proxmox-mailgateway >/dev/null 2>&1; then
   msg_error "This script is only intended for Proxmox Mail Gateway"
+  exit 232
+fi
+
+if [ "$(dpkg --print-architecture 2>/dev/null)" = "arm64" ]; then
+  msg_error "Proxmox Mail Gateway does not support ARM64."
   exit 1
 fi
 
@@ -53,19 +63,51 @@ repo_state() {
   local repo="$1"
   local file=""
   local state="missing"
-  for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+  for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
     [[ -f "$f" ]] || continue
     if grep -q "$repo" "$f"; then
       file="$f"
-      if grep -qE "^[^#].*${repo}" "$f"; then
-        state="active"
-      elif grep -qE "^#.*${repo}" "$f"; then
-        state="disabled"
+      if [[ "$f" == *.sources ]]; then
+        # deb822 format: check Enabled field
+        if grep -qiE '^Enabled:\s*no' "$f"; then
+          state="disabled"
+        else
+          state="active"
+        fi
+      else
+        # legacy format
+        if grep -qE "^[^#].*${repo}" "$f"; then
+          state="active"
+        elif grep -qE "^#.*${repo}" "$f"; then
+          state="disabled"
+        fi
       fi
       break
     fi
   done
   echo "$state $file"
+}
+
+toggle_repo() {
+  # $1 = file, $2 = action (enable|disable)
+  local file="$1" action="$2"
+  if [[ "$file" == *.sources ]]; then
+    if [[ "$action" == "disable" ]]; then
+      if grep -qiE '^Enabled:' "$file"; then
+        sed -i 's/^Enabled:.*/Enabled: no/' "$file"
+      else
+        echo "Enabled: no" >>"$file"
+      fi
+    else
+      sed -i 's/^Enabled:.*/Enabled: yes/' "$file"
+    fi
+  else
+    if [[ "$action" == "disable" ]]; then
+      sed -i '/^[^#]/s/^/# /' "$file"
+    else
+      sed -i 's/^# *//' "$file"
+    fi
+  fi
 }
 
 start_routines() {
@@ -80,11 +122,20 @@ start_routines() {
   case $CHOICE in
   yes)
     msg_info "Correcting Debian Sources"
-    cat <<EOF >/etc/apt/sources.list
-deb http://deb.debian.org/debian ${VERSION} main contrib
-deb http://deb.debian.org/debian ${VERSION}-updates main contrib
-deb http://security.debian.org/debian-security ${VERSION}-security main contrib
+    cat <<EOF >/etc/apt/sources.list.d/debian.sources
+Types: deb
+URIs: http://deb.debian.org/debian
+Suites: ${VERSION} ${VERSION}-updates
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.debian.org/debian-security
+Suites: ${VERSION}-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
+    rm -f /etc/apt/sources.list
     msg_ok "Corrected Debian Sources"
     ;;
   no) msg_error "Selected no to Correcting Debian Sources" ;;
@@ -104,7 +155,7 @@ EOF
     keep) msg_ok "Kept 'pmg-enterprise' repository" ;;
     disable)
       msg_info "Disabling 'pmg-enterprise' repository"
-      sed -i "s/^[^#].*pmg-enterprise/# &/" "$file"
+      toggle_repo "$file" disable
       msg_ok "Disabled 'pmg-enterprise' repository"
       ;;
     delete)
@@ -124,7 +175,7 @@ EOF
     case $CHOICE in
     enable)
       msg_info "Enabling 'pmg-enterprise' repository"
-      sed -i "s/^#.*pmg-enterprise/deb/" "$file"
+      toggle_repo "$file" enable
       msg_ok "Enabled 'pmg-enterprise' repository"
       ;;
     keep) msg_ok "Kept 'pmg-enterprise' repository disabled" ;;
@@ -145,8 +196,12 @@ EOF
     case $CHOICE in
     yes)
       msg_info "Adding 'pmg-enterprise' repository"
-      cat >/etc/apt/sources.list.d/pmg-enterprise.list <<EOF
-deb https://enterprise.proxmox.com/debian/pmg ${VERSION} pmg-enterprise
+      cat >/etc/apt/sources.list.d/pmg-enterprise.sources <<EOF
+Types: deb
+URIs: https://enterprise.proxmox.com/debian/pmg
+Suites: ${VERSION}
+Components: pmg-enterprise
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
 EOF
       msg_ok "Added 'pmg-enterprise' repository"
       ;;
@@ -169,7 +224,7 @@ EOF
     keep) msg_ok "Kept 'pmg-no-subscription' repository" ;;
     disable)
       msg_info "Disabling 'pmg-no-subscription' repository"
-      sed -i "s/^[^#].*pmg-no-subscription/# &/" "$file"
+      toggle_repo "$file" disable
       msg_ok "Disabled 'pmg-no-subscription' repository"
       ;;
     delete)
@@ -189,7 +244,7 @@ EOF
     case $CHOICE in
     enable)
       msg_info "Enabling 'pmg-no-subscription' repository"
-      sed -i "s/^#.*pmg-no-subscription/deb/" "$file"
+      toggle_repo "$file" enable
       msg_ok "Enabled 'pmg-no-subscription' repository"
       ;;
     keep) msg_ok "Kept 'pmg-no-subscription' repository disabled" ;;
@@ -209,8 +264,12 @@ EOF
     case $CHOICE in
     yes)
       msg_info "Adding 'pmg-no-subscription' repository"
-      cat >/etc/apt/sources.list.d/pmg-install-repo.list <<EOF
-deb http://download.proxmox.com/debian/pmg ${VERSION} pmg-no-subscription
+      cat >/etc/apt/sources.list.d/pmg-no-subscription.sources <<EOF
+Types: deb
+URIs: http://download.proxmox.com/debian/pmg
+Suites: ${VERSION}
+Components: pmg-no-subscription
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
 EOF
       msg_ok "Added 'pmg-no-subscription' repository"
       ;;
@@ -232,8 +291,13 @@ EOF
     case $CHOICE in
     yes)
       msg_info "Adding 'pmgtest' repository (disabled)"
-      cat >/etc/apt/sources.list.d/pmgtest-for-beta.list <<EOF
-# deb http://download.proxmox.com/debian/pmg ${VERSION} pmgtest
+      cat >/etc/apt/sources.list.d/pmgtest.sources <<EOF
+Types: deb
+URIs: http://download.proxmox.com/debian/pmg
+Suites: ${VERSION}
+Components: pmgtest
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+Enabled: no
 EOF
       msg_ok "Added 'pmgtest' repository"
       ;;
@@ -250,21 +314,54 @@ EOF
     whiptail --backtitle "Proxmox VE Helper Scripts" --msgbox --title "Support Subscriptions" \
       "Supporting the software's development team is essential.\nPlease consider buying a subscription." 10 58
     msg_info "Disabling subscription nag"
-    cat >/etc/apt/apt.conf.d/no-nag-script <<'EOF'
-DPkg::Post-Invoke { "if [ -s /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js ] && ! grep -q -F 'NoMoreNagging' /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js; then sed -i '/data\.status/{s/\!//;s/active/NoMoreNagging/}' /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js; fi"; };
-EOF
+    mkdir -p /usr/local/bin
+    cat >/usr/local/bin/pmg-remove-nag.sh <<'EOF'
+#!/bin/sh
+WEB_JS=/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+if [ -s "$WEB_JS" ] && ! grep -q NoMoreNagging "$WEB_JS"; then
+    sed -i '/data\.status/{s/\!//;s/active/NoMoreNagging/}' "$WEB_JS"
+fi
 
-    cat >/etc/apt/apt.conf.d/no-nag-script-pmgmanagerlib-mobile <<'EOF'
-DPkg::Post-Invoke { "if [ -s /usr/share/javascript/pmg-gui/js/pmgmanagerlib-mobile.js ] && ! grep -q -F 'NoMoreNagging' /usr/share/javascript/pmg-gui/js/pmgmanagerlib-mobile.js; then sed -i '/data\.status/{s/\!//;s/active/NoMoreNagging/}' /usr/share/javascript/pmg-gui/js/pmgmanagerlib-mobile.js; fi"; };
+MOBILE_JS=/usr/share/javascript/pmg-gui/js/pmgmanagerlib-mobile.js
+if [ -s "$MOBILE_JS" ] && ! grep -q NoMoreNagging "$MOBILE_JS"; then
+    sed -i '/data\.status/{s/\!//;s/active/NoMoreNagging/}' "$MOBILE_JS"
+fi
+
+MOBILE_TPL=/usr/share/pmg-mobile-quarantine-ui/pmg-mobile-index.html.tt
+if [ -s "$MOBILE_TPL" ] && ! grep -q NoMoreNagging "$MOBILE_TPL"; then
+    sed -i '/<head>/r /dev/stdin' "$MOBILE_TPL" <<'HTML'
+    <script>
+        // NoMoreNagging
+        const nativeFetch = window.fetch.bind(window);
+        window.fetch = async (...args) => {
+            const res = await nativeFetch(...args);
+            if (!String(args[0]?.url ?? args[0]).includes('/nodes/localhost/subscription')) return res;
+            const body = await res.clone().json().catch(() => null);
+            if (!body?.data) return res;
+            body.data.status = 'active';
+            return new Response(JSON.stringify(body), { status: res.status, headers: res.headers });
+        };
+    </script>
+HTML
+fi
 EOF
+    chmod 755 /usr/local/bin/pmg-remove-nag.sh
+
+    cat >/etc/apt/apt.conf.d/no-nag-script <<'EOF'
+DPkg::Post-Invoke { "/usr/local/bin/pmg-remove-nag.sh"; };
+EOF
+    rm -f /etc/apt/apt.conf.d/no-nag-script-pmgmanagerlib-mobile
     msg_ok "Disabled subscription nag (clear browser cache!)"
     ;;
   no)
     msg_error "Selected no to Disabling subscription nag"
-    rm -f /etc/apt/apt.conf.d/no-nag-script 2>/dev/null
+    rm -f /etc/apt/apt.conf.d/no-nag-script /etc/apt/apt.conf.d/no-nag-script-pmgmanagerlib-mobile /usr/local/bin/pmg-remove-nag.sh
     ;;
   esac
   apt --reinstall install proxmox-widget-toolkit pmg-gui &>/dev/null || msg_error "Widget toolkit reinstall failed"
+  if dpkg -s pmg-mobile-quarantine-ui &>/dev/null; then
+    apt --reinstall install pmg-mobile-quarantine-ui &>/dev/null || msg_error "Mobile quarantine UI reinstall failed"
+  fi
 
   # ---- UPDATE ----
   CHOICE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "UPDATE" --menu \
@@ -313,7 +410,7 @@ while true; do
   case $yn in
   [Yy]*) break ;;
   [Nn]*)
-    clear
+    clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
     exit
     ;;
   *) echo "Please answer yes or no." ;;

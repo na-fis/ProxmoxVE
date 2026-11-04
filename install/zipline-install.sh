@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck
 # Co-Author: MickLesk (Canbiz)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -14,15 +14,15 @@ setting_up_container
 network_check
 update_os
 
-NODE_VERSION="22" NODE_MODULE="pnpm" setup_nodejs
+NODE_VERSION="24" NODE_MODULE="pnpm" setup_nodejs
 PG_VERSION="17" setup_postgresql
 PG_DB_NAME="ziplinedb" PG_DB_USER="zipline" setup_postgresql_db
 fetch_and_deploy_gh_release "zipline" "diced/zipline" "tarball"
-SECRET_KEY="$(openssl rand -base64 42 | tr -dc 'a-zA-Z0-9')"
+SECRET_KEY="$(random_password 56)"
 echo "Zipline Secret Key: ${SECRET_KEY}" >>~/zipline.creds
 
 msg_info "Installing Zipline (Patience)"
-cd /opt/zipline || exit
+cd /opt/zipline
 cat <<EOF >/opt/zipline/.env
 DATABASE_URL=postgres://$PG_DB_USER:$PG_DB_PASS@localhost:5432/$PG_DB_NAME
 CORE_SECRET=$SECRET_KEY

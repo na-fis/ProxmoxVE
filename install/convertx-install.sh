@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Omar Minaya | MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/C4illin/ConvertX
@@ -17,13 +17,19 @@ setup_hwaccel
 setup_imagemagick
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   assimp-utils \
   calibre \
+  dasel \
   dcraw \
   dvisvgm \
   ffmpeg \
+  graphicsmagick \
   inkscape \
+  libemail-outlook-message-perl \
+  libheif-examples \
+  libjxl-tools \
+  libreoffice-writer \
   libva2 \
   libvips-tools \
   lmodern \
@@ -32,6 +38,7 @@ $STD apt-get install -y \
   poppler-utils \
   potrace \
   python3-numpy \
+  resvg \
   texlive \
   texlive-fonts-recommended \
   texlive-latex-extra \
@@ -39,7 +46,16 @@ $STD apt-get install -y \
   texlive-xetex
 msg_ok "Installed Dependencies"
 
-NODE_VERSION=22 NODE_MODULE="bun" setup_nodejs
+setup_uv
+
+msg_info "Installing markitdown"
+export UV_TOOL_BIN_DIR=/usr/local/bin
+$STD uv tool install "markitdown[all]"
+msg_ok "Installed markitdown"
+
+fetch_and_deploy_gh_release "vtracer" "visioncortex/vtracer" "prebuild" "0.6.4" "/usr/local/bin" "vtracer-$(arch_resolve "x86_64" "aarch64")-unknown-linux-musl.tar.gz"
+
+NODE_VERSION="22" NODE_MODULE="bun" setup_nodejs
 fetch_and_deploy_gh_release "ConvertX" "C4illin/ConvertX" "tarball" "latest" "/opt/convertx"
 
 msg_info "Installing ConvertX"
@@ -47,7 +63,7 @@ cd /opt/convertx
 mkdir -p data
 $STD bun install
 
-JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
+JWT_SECRET=$(random_password 32)
 cat <<EOF >/opt/convertx/.env
 JWT_SECRET=$JWT_SECRET
 HTTP_ALLOWED=true

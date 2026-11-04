@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: fstof
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/donetick/donetick
@@ -17,10 +17,11 @@ msg_info "Installing Dependencies"
 $STD apt install -y ca-certificates
 msg_ok "Installed Dependencies"
 
-fetch_and_deploy_gh_release "donetick" "donetick/donetick" "prebuild" "latest" "/opt/donetick" "donetick_Linux_x86_64.tar.gz"
+fetch_and_deploy_gh_release "donetick" "donetick/donetick" "prebuild" "latest" "/opt/donetick" "donetick_Linux_$(arch_resolve "x86_64" "arm64").tar.gz"
 
 msg_info "Setup Donetick"
 cd /opt/donetick
+[[ -f config/selfhosted.yaml ]] || cp config/selfhosted.yaml.example config/selfhosted.yaml
 TOKEN=$(openssl rand -hex 16)
 sed -i -e "s/change_this_to_a_secure_random_string_32_characters_long/${TOKEN}/g" config/selfhosted.yaml
 msg_ok "Setup Donetick"

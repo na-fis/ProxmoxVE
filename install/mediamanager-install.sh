@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2025 Community Scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: vhsdream
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/maxdorninger/MediaManager
@@ -13,32 +13,21 @@ setting_up_container
 network_check
 update_os
 
-read -r -p "${TAB3}Enter the email address of your first admin user: " admin_email
+admin_email="${var_mediamanager_admin_email:-}"
+[[ -n "$admin_email" ]] || read -r -p "${TAB3}Enter the email address of your first admin user: " admin_email || true
+[[ -n "$admin_email" ]] || { msg_error "No admin e-mail given; set var_mediamanager_admin_email or answer the prompt"; exit 64; }
 if [[ "$admin_email" ]]; then
   EMAIL="$admin_email"
 fi
 
 setup_yq
 NODE_VERSION="24" setup_nodejs
-setup_uv
 PG_VERSION="17" setup_postgresql
 
-msg_info "Setting up PostgreSQL"
-DB_NAME="mm_db"
-DB_USER="mm_user"
-DB_PASS="$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | cut -c1-13)"
-$STD sudo -u postgres psql -c "CREATE ROLE $DB_USER WITH LOGIN PASSWORD '$DB_PASS';"
-$STD sudo -u postgres psql -c "CREATE DATABASE $DB_NAME WITH OWNER $DB_USER TEMPLATE template0;"
-$STD sudo -u postgres psql -c "ALTER ROLE $DB_USER SET client_encoding TO 'utf8';"
-{
-  echo "MediaManager Credentials"
-  echo "MediaManager Database User: $DB_USER"
-  echo "MediaManager Database Password: $DB_PASS"
-  echo "MediaManager Database Name: $DB_NAME"
-} >>~/mediamanager.creds
-msg_ok "Set up PostgreSQL"
+PG_DB_NAME="mm_db" PG_DB_USER="mm_user" setup_postgresql_db
 
 fetch_and_deploy_gh_release "MediaManager" "maxdorninger/MediaManager" "tarball" "latest" "/opt/mediamanager"
+UV_PROJECT_DIR="/opt/mediamanager" setup_uv
 
 msg_info "Configuring MediaManager"
 MM_DIR="/opt/mm"
@@ -61,14 +50,13 @@ $STD /usr/local/bin/uv sync --locked --active -n -p cpython3.13 --managed-python
 msg_ok "Configured MediaManager"
 
 msg_info "Creating config and start script"
-LOCAL_IP="$(hostname -I | awk '{print $1}')"
 SECRET="$(openssl rand -hex 32)"
 sed -e "s/localhost:8/$LOCAL_IP:8/g" \
   -e "s|/data/|$MEDIA_DIR/|g" \
   -e 's/"db"/"localhost"/' \
-  -e "s/user = \"MediaManager\"/user = \"$DB_USER\"/" \
-  -e "s/password = \"MediaManager\"/password = \"$DB_PASS\"/" \
-  -e "s/dbname = \"MediaManager\"/dbname = \"$DB_NAME\"/" \
+  -e "s/user = \"MediaManager\"/user = \"mm_user\"/" \
+  -e "s/password = \"MediaManager\"/password = \"$PG_DB_PASS\"/" \
+  -e "s/dbname = \"MediaManager\"/dbname = \"mm_db\"/" \
   -e "/^token_secret/s/=.*/= \"$SECRET\"/" \
   -e "s/admin@example.com/$EMAIL/" \
   -e '/^admin_emails/s/, .*/]/' \

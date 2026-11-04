@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Slaviša Arežina (tremor021)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/seriousm4x/UpSnap
@@ -23,7 +23,7 @@ $STD apt install -y \
   sshpass
 msg_ok "Installed Dependencies"
 
-fetch_and_deploy_gh_release "upsnap" "seriousm4x/UpSnap" "prebuild" "latest" "/opt/upsnap" "UpSnap_*_linux_amd64.zip"
+fetch_and_deploy_gh_release "upsnap" "seriousm4x/UpSnap" "prebuild" "latest" "/opt/upsnap" "UpSnap_*_linux_$(arch_resolve).zip"
 setcap 'cap_net_raw=+ep' /opt/upsnap/upsnap
 
 msg_info "Creating Service"

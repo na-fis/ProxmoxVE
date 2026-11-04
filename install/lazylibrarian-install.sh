@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck
 # Co-Author: MountyMapleSyrup (MountyMapleSyrup)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -27,16 +27,16 @@ msg_info "Setup Python3"
 $STD apt install -y \
     pip \
     python3-irc
-$STD pip install jaraco.stream
-$STD pip install python-Levenshtein
-$STD pip install soupsieve
-$STD pip install pypdf
+$STD pip install --break-system-packages jaraco.stream
+$STD pip install --break-system-packages python-Levenshtein
+$STD pip install --break-system-packages soupsieve
+$STD pip install --break-system-packages pypdf
 msg_ok "Setup Python3"
 
 msg_info "Installing LazyLibrarian"
 $STD git clone https://gitlab.com/LazyLibrarian/LazyLibrarian /opt/LazyLibrarian
 cd /opt/LazyLibrarian
-$STD pip install .
+$STD pip install --break-system-packages .
 msg_ok "Installed LazyLibrarian"
 
 msg_info "Creating Service"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Slaviša Arežina (tremor021)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/cryptpad/cryptpad
@@ -14,27 +14,31 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y git
+$STD apt install -y git
 msg_ok "Installed Dependencies"
 
 NODE_VERSION="22" setup_nodejs
 
-read -rp "${TAB3}Install OnlyOffice components instead of CKEditor? (Y/N): " onlyoffice
-fetch_and_deploy_gh_release "cryptpad" "cryptpad/cryptpad"
+onlyoffice="${var_cryptpad_onlyoffice:-}"
+[[ -n "$onlyoffice" ]] || read -rp "${TAB3}Install OnlyOffice components instead of CKEditor? (Y/N): " onlyoffice || true
+fetch_and_deploy_gh_release "cryptpad" "cryptpad/cryptpad" "tarball"
 
-msg_info "Setup ${APPLICATION}"
+msg_info "Setup CryptPad"
 cd /opt/cryptpad
-$STD npm ci
+$STD npm ci --allow-git=all
 $STD npm run install:components
-$STD npm run build
-cp config/config.example.js config/config.js
-IP=$(hostname -I | awk '{print $1}')
-sed -i "51s/localhost/${IP}/g" /opt/cryptpad/config/config.js
-sed -i "80s#//httpAddress: 'localhost'#httpAddress: '0.0.0.0'#g" /opt/cryptpad/config/config.js
-if [[ "$onlyoffice" =~ ^[Yy]$ ]]; then
-  $STD bash -c "./install-onlyoffice.sh --accept-license"
+if [[ "${onlyoffice,,}" =~ ^(y|yes)$ ]]; then
+  $STD bash -c "./install-office.sh --accept-license"
 fi
-msg_ok "Setup ${APPLICATION}"
+cp config/config.example.js config/config.js
+cp config/infra.example.js config/infra.js
+sed -i \
+  -e "s|origin: \"http://localhost:3000\"|origin: \"http://${LOCAL_IP}:3000\"|" \
+  -e "s|sandboxOrigin: \"http://localhost:3001\"|sandboxOrigin: \"http://${LOCAL_IP}:3001\"|" \
+  -e "s|httpHost: \"localhost\"|httpHost: \"0.0.0.0\"|" \
+  config/infra.js
+$STD npm run build
+msg_ok "Setup CryptPad"
 
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/cryptpad.service

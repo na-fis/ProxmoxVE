@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 communtiy-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (Canbiz)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://nextpvr.com/
@@ -25,12 +25,13 @@ $STD apt install -y \
   libdvbv5-0 \
   dtv-scan-tables \
   libc6-dev \
+  libicu-dev \
   ffmpeg
 msg_ok "Installed Dependencies"
 
 msg_info "Setup NextPVR (Patience)"
 cd /opt
-curl -fsSL "https://nextpvr.com/nextpvr-helper.deb" -o "/opt/nextpvr-helper.deb"
+curl_download "/opt/nextpvr-helper.deb" "https://nextpvr.com/nextpvr-helper.deb"
 $STD dpkg -i nextpvr-helper.deb
 rm -rf /opt/nextpvr-helper.deb
 msg_ok "Installed NextPVR"

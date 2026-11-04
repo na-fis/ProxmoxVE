@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
-# Copyright (c) 2021-2025 community-scripts ORG
+_cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
+source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: AlphaLawless
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/alexjustesen/speedtest-tracker
@@ -12,6 +13,7 @@ var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
+var_arm64="${var_arm64:-yes}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -30,16 +32,17 @@ function update_script() {
   fi
 
   if check_for_gh_release "speedtest-tracker" "alexjustesen/speedtest-tracker"; then
-    PHP_VERSION="8.4" PHP_FPM="YES" PHP_MODULE="common,sqlite3,redis" setup_php
+    PHP_VERSION="8.4" PHP_FPM="YES" setup_php
     setup_composer
     NODE_VERSION="22" setup_nodejs
+    setcap cap_net_raw+ep /bin/ping
 
     msg_info "Stopping Service"
     systemctl stop speedtest-tracker
     msg_ok "Stopped Service"
 
     msg_info "Updating Speedtest CLI"
-    $STD apt update
+    apt_update_safe
     $STD apt --only-upgrade install -y speedtest
     msg_ok "Updated Speedtest CLI"
 
@@ -68,7 +71,7 @@ function update_script() {
     msg_info "Starting Service"
     systemctl start speedtest-tracker
     msg_ok "Started Service"
-    msg_ok "Updated successfully"
+    msg_ok "Updated successfully!"
   fi
   exit
 }
@@ -77,7 +80,7 @@ start
 build_container
 description
 
-msg_ok "Completed Successfully!\n"
+msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"
+echo -e "${INFO}${YW}Access it using the following URL:${CL}"
+echo -e "${GATEWAY}${BGN}http://${IP}${CL}"

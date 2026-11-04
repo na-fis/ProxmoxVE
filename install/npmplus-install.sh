@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/ZoeyVid/NPMplus
@@ -25,13 +25,10 @@ $STD apk add docker
 $STD rc-service docker start
 $STD rc-update add docker default
 
-get_latest_release() {
-  curl -fsSL https://api.github.com/repos/$1/releases/latest | grep '"tag_name":' | cut -d'"' -f4
-}
-DOCKER_COMPOSE_LATEST_VERSION=$(get_latest_release "docker/compose")
+DOCKER_COMPOSE_LATEST_VERSION=$(get_latest_github_release "docker/compose" false)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 mkdir -p $DOCKER_CONFIG/cli-plugins
-curl -fsSL https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_LATEST_VERSION/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+curl -fsSL https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_LATEST_VERSION/docker-compose-linux-$(arch_resolve "x86_64" "aarch64") -o ~/.docker/cli-plugins/docker-compose
 chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
 msg_ok "Installed Docker & Compose"
 
@@ -41,26 +38,29 @@ curl -fsSL "https://raw.githubusercontent.com/ZoeyVid/NPMplus/refs/heads/develop
 msg_ok "Fetched NPMplus"
 
 attempts=0
+TZ_INPUT="${var_npmplus_tz:-}"
 while true; do
-  read -r -p "${TAB3}Enter your TZ Identifier (e.g., Europe/Berlin): " TZ_INPUT
+  [[ -n "$TZ_INPUT" ]] || read -r -p "${TAB3}Enter your TZ Identifier (e.g., Europe/Berlin): " TZ_INPUT || { msg_error "No TZ identifier given; set var_npmplus_tz or answer the prompt"; exit 64; }
   if validate_tz "$TZ_INPUT"; then
     break
   fi
   msg_error "Invalid timezone! Please enter a valid TZ identifier."
+  TZ_INPUT=""
 
   attempts=$((attempts + 1))
   if [[ "$attempts" -ge 3 ]]; then
     msg_error "Maximum attempts reached. Exiting."
-    exit 1
+    exit 254
   fi
 done
 
-read -r -p "${TAB3}Enter your ACME Email: " ACME_EMAIL_INPUT
+ACME_EMAIL_INPUT="${var_npmplus_acme_email:-}"
+[[ -n "$ACME_EMAIL_INPUT" ]] || read -r -p "${TAB3}Enter your ACME Email (optional, press ENTER to skip): " ACME_EMAIL_INPUT || true
 
 yq -i "
   .services.npmplus.environment |=
-    (map(select(. != \"TZ=*\" and . != \"ACME_EMAIL=*\")) +
-    [\"TZ=$TZ_INPUT\", \"ACME_EMAIL=$ACME_EMAIL_INPUT\"])
+    (map(select(. != \"TZ=*\" and . != \"ACME_EMAIL=*\" and . != \"INITIAL_ADMIN_EMAIL=*\" and . != \"INITIAL_ADMIN_PASSWORD=*\")) +
+    [\"TZ=$TZ_INPUT\", \"ACME_EMAIL=$ACME_EMAIL_INPUT\", \"INITIAL_ADMIN_EMAIL=admin@local.com\", \"INITIAL_ADMIN_PASSWORD=community-scripts.org\"])
 " /opt/compose.yaml
 
 msg_info "Building and Starting NPMplus (Patience)"
@@ -76,49 +76,14 @@ for i in {1..60}; do
     elif [[ "$STATUS" == "unhealthy" ]]; then
       msg_error "NPMplus container is unhealthy! Check logs."
       docker logs "$CONTAINER_ID"
-      exit 1
+      exit 150
     fi
   fi
   sleep 2
-  [[ $i -eq 60 ]] && msg_error "NPMplus container did not become healthy within 120s." && docker logs "$CONTAINER_ID" && exit 1
+  [[ $i -eq 60 ]] && msg_error "NPMplus container did not become healthy within 120s." && docker logs "$CONTAINER_ID" && exit 150
 done
 msg_ok "Builded and started NPMplus"
 
 motd_ssh
 customize
-
-msg_info "Retrieving Default Login (Patience)"
-PASSWORD_FOUND=0
-
-for i in {1..60}; do
-  PASSWORD_LINE=$(
-    { awk '/Creating a new user:/{print; exit}' < <(docker logs "$CONTAINER_ID" 2>&1); } || true
-  )
-
-  if [[ -n "${PASSWORD_LINE:-}" ]]; then
-    PASSWORD="${PASSWORD_LINE#*password: }"
-    printf 'username: admin@example.org\npassword: %s\n' "$PASSWORD" >/opt/.npm_pwd
-    msg_ok "Saved default login to /opt/.npm_pwd"
-    PASSWORD_FOUND=1
-    break
-  fi
-  sleep 2
-done
-if [[ $PASSWORD_FOUND -eq 0 ]]; then
-  PASSWORD_LINE=$(
-    timeout 30s bash -c '
-      docker logs -f --since=0s --tail=0 "$1" 2>&1 | awk "/Creating a new user:/{print; exit}"
-    ' _ "$CONTAINER_ID" || true
-  )
-  if [[ -n "${PASSWORD_LINE:-}" ]]; then
-    PASSWORD="${PASSWORD_LINE#*password: }"
-    printf 'username: admin@example.org\npassword: %s\n' "$PASSWORD" >/opt/.npm_pwd
-    msg_ok "Saved default login to /opt/.npm_pwd (live)"
-    PASSWORD_FOUND=1
-  fi
-fi
-
-if [[ $PASSWORD_FOUND -eq 0 ]]; then
-  msg_error "Could not retrieve default login after 120s."
-  echo -e "\nYou can manually check the container logs with:\n  docker logs $CONTAINER_ID | grep 'Creating a new user:'\n"
-fi
+cleanup_lxc

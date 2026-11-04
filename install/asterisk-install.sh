@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: michelroegl-brunner
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://asterisk.org
@@ -47,7 +47,8 @@ Choose Asterisk version to install:
 2) Latest LTS ($LTS_VERSION)
 3) Latest Certified ($CERT_VERSION)
 EOF
-read -rp "Enter choice [1-3]: " ASTERISK_CHOICE
+ASTERISK_CHOICE="${var_asterisk_version:-}"
+[[ -n "$ASTERISK_CHOICE" ]] || read -rp "Enter choice [1-3]: " ASTERISK_CHOICE || true
 
 CERTIFIED=0
 case "$ASTERISK_CHOICE" in

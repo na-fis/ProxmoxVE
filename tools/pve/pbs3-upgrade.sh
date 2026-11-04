@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT
 # https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 
 header_info() {
-  clear
+  clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
   cat <<"EOF"
     ____  ____ __________    __  ______  __________  ___    ____  ______
    / __ \/ __ ) ___/__  /   / / / / __ \/ ____/ __ \/   |  / __ \/ ____/
@@ -44,6 +44,10 @@ msg_error() {
   echo -e "${BFR} ${CROSS} ${RD}${msg}${CL}"
 }
 
+# Telemetry
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/api/api.func") 2>/dev/null || true
+declare -f init_tool_telemetry &>/dev/null && init_tool_telemetry "pbs3-upgrade" "pve"
+
 start_routines() {
   header_info
   CHOICE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "PBS 2 BACKUP" --menu "\nMake a backup of /etc/proxmox-backup to ensure that in the worst case, any relevant configuration can be recovered?" 14 58 2 \
@@ -67,9 +71,9 @@ start_routines() {
   yes)
     msg_info "Changing to Proxmox Backup Server 3 Sources"
     cat <<EOF >/etc/apt/sources.list
-deb http://deb.debian.org/debian bookworm main contrib
-deb http://deb.debian.org/debian bookworm-updates main contrib
-deb http://security.debian.org/debian-security bookworm-security main contrib
+deb https://deb.debian.org/debian bookworm main contrib
+deb https://deb.debian.org/debian bookworm-updates main contrib
+deb https://security.debian.org/debian-security bookworm-security main contrib
 EOF
     msg_ok "Changed to Proxmox Backup Server 3 Sources"
     ;;
@@ -164,11 +168,17 @@ while true; do
   case $yn in
   [Yy]*) break ;;
   [Nn]*)
-    clear
+    clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
     exit
     ;;
   *) echo "Please answer yes or no." ;;
   esac
 done
+
+if [ "$(dpkg --print-architecture 2>/dev/null)" = "arm64" ]; then
+  header_info
+  msg_error "This upgrade script targets the amd64 Proxmox repositories and is not supported on ARM64."
+  exit 1
+fi
 
 start_routines

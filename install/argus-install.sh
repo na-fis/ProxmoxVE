@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://release-argus.io/
+# Source: https://release-argus.io/ | Github: https://github.com/release-argus/Argus
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -13,7 +13,7 @@ setting_up_container
 network_check
 update_os
 
-fetch_and_deploy_gh_release "Argus" "release-argus/Argus" "singlefile" "latest" "/opt/argus" "Argus*linux-amd64"
+fetch_and_deploy_gh_release "Argus" "release-argus/Argus" "singlefile" "latest" "/opt/argus" "Argus*linux-$(arch_resolve)"
 
 msg_info "Setup Argus Config"
 cat <<EOF >/opt/argus/config.yml
@@ -57,8 +57,8 @@ service:
       url: community-scripts/ProxmoxVE
       use_prerelease: false
     dashboard:
-      icon: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/refs/heads/main/misc/images/logo.png
-      icon_link_to: https://helper-scripts.com/
+      icon: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/refs/heads/main/.github/assets/logo.png
+      icon_link_to: https://community-scripts.org/
       web_url: https://github.com/community-scripts/ProxmoxVE/releases
 EOF
 msg_ok "Setup Config"

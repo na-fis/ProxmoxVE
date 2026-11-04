@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT
 # https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 
 header_info() {
-  clear
+  clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
   cat <<"EOF"
     ____ _    ____________     __  ______  __________  ___    ____  ______
    / __ \ |  / / ____( __ )   / / / / __ \/ ____/ __ \/   |  / __ \/ ____/
@@ -44,15 +44,19 @@ msg_error() {
   echo -e "${BFR} ${CROSS} ${RD}${msg}${CL}"
 }
 
+# Telemetry
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/api/api.func") 2>/dev/null || true
+declare -f init_tool_telemetry &>/dev/null && init_tool_telemetry "pve8-upgrade" "pve"
+
 start_routines() {
   header_info
 
   whiptail --backtitle "Proxmox VE Helper Scripts" --msgbox --title "PVE8 SOURCES" "This will set the correct sources to update and install Proxmox VE 8." 10 58
   msg_info "Changing to Proxmox VE 8 Sources"
   cat <<EOF >/etc/apt/sources.list
-deb http://ftp.debian.org/debian bookworm main contrib
-deb http://ftp.debian.org/debian bookworm-updates main contrib
-deb http://security.debian.org/debian-security bookworm-security main contrib
+deb https://ftp.debian.org/debian bookworm main contrib
+deb https://ftp.debian.org/debian bookworm-updates main contrib
+deb https://security.debian.org/debian-security bookworm-security main contrib
 EOF
   msg_ok "Changed to Proxmox VE 8 Sources"
 
@@ -114,7 +118,7 @@ while true; do
   case $yn in
   [Yy]*) break ;;
   [Nn]*)
-    clear
+    clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
     exit
     ;;
   *) echo "Please answer yes or no." ;;
@@ -125,6 +129,12 @@ if ! command -v pveversion >/dev/null 2>&1; then
   header_info
   msg_error "\n No PVE Detected!\n"
   exit
+fi
+
+if [ "$(dpkg --print-architecture 2>/dev/null)" = "arm64" ]; then
+  header_info
+  msg_error "This upgrade script targets the amd64 Proxmox VE repositories and is not supported on ARM64."
+  exit 1
 fi
 
 if ! pveversion | grep -Eq "pve-manager/(7\.4-(16|17|18|19))"; then

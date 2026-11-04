@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://docs.unmanic.app/
@@ -22,7 +22,7 @@ msg_ok "Installed Dependencies"
 setup_hwaccel
 
 msg_info "Installing Unmanic"
-$STD pip3 install unmanic
+$STD pip3 install --break-system-packages unmanic
 msg_ok "Installed Unmanic"
 
 msg_info "Creating Service"

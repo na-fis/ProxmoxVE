@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://pocketbase.io/
+# Source: https://pocketbase.io/ | Github: https://github.com/pocketbase/pocketbase
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -13,7 +13,7 @@ setting_up_container
 network_check
 update_os
 
-fetch_and_deploy_gh_release "pocketbase" "pocketbase/pocketbase" "prebuild" "latest" "/opt/pocketbase" "pocketbase*linux_amd64.zip"
+fetch_and_deploy_gh_release "pocketbase" "pocketbase/pocketbase" "prebuild" "latest" "/opt/pocketbase" "pocketbase*linux_$(arch_resolve).zip"
 
 msg_info "Configuring Pocketbase"
 mkdir -p /opt/pocketbase/{pb_public,pb_migrations,pb_hooks}

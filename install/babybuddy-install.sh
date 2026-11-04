@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/babybuddy/babybuddy
@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   uwsgi \
   uwsgi-plugin-python3 \
   libopenjp2-7-dev \
@@ -24,16 +24,16 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 setup_uv
-fetch_and_deploy_gh_release "babybuddy" "babybuddy/babybuddy"
+fetch_and_deploy_gh_release "babybuddy" "babybuddy/babybuddy" "tarball"
 
 msg_info "Installing Babybuddy"
 mkdir -p /opt/data
 cd /opt/babybuddy
-$STD uv venv .venv
+$STD uv venv --clear .venv
 $STD source .venv/bin/activate
 $STD uv pip install -r requirements.txt
 cp babybuddy/settings/production.example.py babybuddy/settings/production.py
-SECRET_KEY=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | cut -c1-32)
+SECRET_KEY=$(random_password 32)
 ALLOWED_HOSTS=$(hostname -I | tr ' ' ',' | sed 's/,$//')",127.0.0.1,localhost"
 sed -i \
   -e "s/^SECRET_KEY = \"\"/SECRET_KEY = \"$SECRET_KEY\"/" \
@@ -89,10 +89,7 @@ server {
 }
 EOF
 
-ln -sf /etc/nginx/sites-available/babybuddy /etc/nginx/sites-enabled/babybuddy
-rm /etc/nginx/sites-enabled/default
-systemctl enable -q --now nginx
-service nginx reload
+nginx_enable_site babybuddy
 msg_ok "Configured NGINX"
 
 motd_ssh

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 tteck
+# Copyright (c) 2021-2026 tteck
 # Author: tteckster | MickLesk (CanbiZ)
 # License: MIT
 # https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 
 header_info() {
-  clear
+  clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
   cat <<"EOF"
     ____ _    ________   ____             __     ____           __        ____
    / __ \ |  / / ____/  / __ \____  _____/ /_   /  _/___  _____/ /_____ _/ / /
@@ -44,6 +44,10 @@ msg_error() {
   echo -e "${BFR} ${CROSS} ${RD}${msg}${CL}"
 }
 
+# Telemetry
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/api/api.func") 2>/dev/null || true
+declare -f init_tool_telemetry &>/dev/null && init_tool_telemetry "post-pve-install" "pve"
+
 get_pve_version() {
   local pve_ver
   pve_ver="$(pveversion | awk -F'/' '{print $2}' | awk -F'-' '{print $1}')"
@@ -59,7 +63,14 @@ get_pve_major_minor() {
 
 component_exists_in_sources() {
   local component="$1"
-  grep -h -E "^[^#]*Components:[^#]*\b${component}\b" /etc/apt/sources.list.d/*.sources 2>/dev/null | grep -q .
+  local line comp
+  while IFS= read -r line; do
+    line="${line#*Components:}"
+    for comp in $line; do
+      [[ "$comp" == "$component" ]] && return 0
+    done
+  done < <(grep -h -E "^[^#]*Components:" /etc/apt/sources.list.d/*.sources 2>/dev/null)
+  return 1
 }
 
 main() {
@@ -70,7 +81,7 @@ main() {
     case $yn in
     [Yy]*) break ;;
     [Nn]*)
-      clear
+      clear 2>/dev/null || printf '\033[H\033[2J\033[3J'
       exit
       ;;
     *) echo "Please answer yes or no." ;;
@@ -84,19 +95,19 @@ main() {
   if [[ "$PVE_MAJOR" == "8" ]]; then
     if ((PVE_MINOR < 0 || PVE_MINOR > 9)); then
       msg_error "Unsupported Proxmox 8 version"
-      exit 1
+      exit 105
     fi
     start_routines_8
   elif [[ "$PVE_MAJOR" == "9" ]]; then
-    if ((PVE_MINOR < 0 || PVE_MINOR > 1)); then
-      msg_error "Only Proxmox 9.0-9.1.x is currently supported"
-      exit 1
+    if ((PVE_MINOR < 0 || PVE_MINOR > 2)); then
+      msg_error "Only Proxmox 9.0-9.2.x is currently supported"
+      exit 105
     fi
-    start_routines_9
+    start_routines_9 "$PVE_MINOR"
   else
     msg_error "Unsupported Proxmox VE major version: $PVE_MAJOR"
-    echo -e "Supported: 8.0–8.9.x and 9.0–9.1.x"
-    exit 1
+    echo -e "Supported: 8.0–8.9.x and 9.0–9.2.x"
+    exit 105
   fi
 }
 
@@ -111,9 +122,9 @@ start_routines_8() {
   yes)
     msg_info "Correcting Proxmox VE Sources"
     cat <<EOF >/etc/apt/sources.list
-deb http://deb.debian.org/debian bookworm main contrib
-deb http://deb.debian.org/debian bookworm-updates main contrib
-deb http://security.debian.org/debian-security bookworm-security main contrib
+deb https://deb.debian.org/debian bookworm main contrib
+deb https://deb.debian.org/debian bookworm-updates main contrib
+deb https://security.debian.org/debian-security bookworm-security main contrib
 EOF
     echo 'APT::Get::Update::SourceListWarnings::NonFreeFirmware "false";' >/etc/apt/apt.conf.d/no-bookworm-firmware.conf
     msg_ok "Corrected Proxmox VE Sources"
@@ -184,6 +195,7 @@ EOF
 }
 
 start_routines_9() {
+  local PVE_MINOR="${1:-0}"
   header_info
 
   # check if deb822 Sources (*.sources) exist
@@ -214,9 +226,8 @@ start_routines_9() {
         [[ -n "$list_files" ]] && MSG+="$(echo "$list_files" | sed 's|^| - |')\n"
         MSG+="\nDo you want to disable (comment out/rename) all legacy sources and use ONLY deb822 .sources format?\n\nRecommended for Proxmox VE 9."
 
-        whiptail --backtitle "Proxmox VE Helper Scripts" --title "Disable legacy sources?" \
-          --yesno "$MSG" 18 80
-        if [[ $? -eq 0 ]]; then
+        if whiptail --backtitle "Proxmox VE Helper Scripts" --title "Disable legacy sources?" \
+          --yesno "$MSG" 18 80; then
           # Backup and disable sources.list
           if [[ -f "$listfile" ]] && grep -qE '^\s*deb ' "$listfile"; then
             cp "$listfile" "$listfile.bak"
@@ -247,8 +258,10 @@ start_routines_9() {
       msg_info "Correcting Proxmox VE Sources (deb822)"
       # remove all existing .list files
       rm -f /etc/apt/sources.list.d/*.list
-      # remove bookworm and proxmox entries from sources.list
-      sed -i '/proxmox/d;/bookworm/d' /etc/apt/sources.list || true
+      # remove bookworm and proxmox entries from sources.list (if it exists)
+      if [ -f /etc/apt/sources.list ]; then
+        sed -i '/proxmox/d;/bookworm/d' /etc/apt/sources.list
+      fi
       # Create new deb822 sources
       cat >/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb
@@ -281,7 +294,7 @@ EOF
       --title "PVE-ENTERPRISE" \
       --menu "'pve-enterprise' repository already exists.\n\nWhat do you want to do?" 14 58 2 \
       "keep" "Keep as is" \
-      "disable" "Comment out (disable) this repo" \
+      "disable" "Disable this repo (set Enabled: false)" \
       "delete" "Delete this repo file" \
       3>&2 2>&1 1>&3)
     case $CHOICE in
@@ -469,15 +482,21 @@ EOF
       "no" " " 3>&2 2>&1 1>&3)
     case $CHOICE in
     yes)
+      local CEPH_RELEASE
+      if ((PVE_MINOR >= 2)); then
+        CEPH_RELEASE="ceph-tentacle"
+      else
+        CEPH_RELEASE="ceph-squid"
+      fi
       msg_info "Adding 'ceph package repositories' (deb822)"
       cat >/etc/apt/sources.list.d/ceph.sources <<EOF
 Types: deb
-URIs: http://download.proxmox.com/debian/ceph-squid
+URIs: http://download.proxmox.com/debian/${CEPH_RELEASE}
 Suites: trixie
 Components: no-subscription
 Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
 EOF
-      msg_ok "Added 'ceph package repositories'"
+      msg_ok "Added 'ceph package repositories' (${CEPH_RELEASE})"
       ;;
     no)
       msg_error "Selected no to Adding 'ceph package repositories'"
@@ -545,42 +564,23 @@ if [ -s "$WEB_JS" ] && ! grep -q NoMoreNagging "$WEB_JS"; then
 fi
 
 MOBILE_TPL=/usr/share/pve-yew-mobile-gui/index.html.tpl
-MARKER="<!-- MANAGED BLOCK FOR MOBILE NAG -->"
-if [ -f "$MOBILE_TPL" ] && ! grep -q "$MARKER" "$MOBILE_TPL"; then
+if [ -s "$MOBILE_TPL" ] && ! grep -q NoMoreNagging "$MOBILE_TPL"; then
     echo "Patching Mobile UI nag..."
-    printf "%s\n" \
-      "$MARKER" \
-      "<script>" \
-      "  function removeSubscriptionElements() {" \
-      "    // --- Remove subscription dialogs ---" \
-      "    const dialogs = document.querySelectorAll('dialog.pwt-outer-dialog');" \
-      "    dialogs.forEach(dialog => {" \
-      "      const text = (dialog.textContent || '').toLowerCase();" \
-      "      if (text.includes('subscription')) {" \
-      "        dialog.remove();" \
-      "        console.log('Removed subscription dialog');" \
-      "      }" \
-      "    });" \
-      "" \
-      "    // --- Remove subscription cards, but keep Reboot/Shutdown/Console ---" \
-      "    const cards = document.querySelectorAll('.pwt-card.pwt-p-2.pwt-d-flex.pwt-interactive.pwt-justify-content-center');" \
-      "    cards.forEach(card => {" \
-      "      const text = (card.textContent || '').toLowerCase();" \
-      "      const hasButton = card.querySelector('button');" \
-      "      if (!hasButton && text.includes('subscription')) {" \
-      "        card.remove();" \
-      "        console.log('Removed subscription card');" \
-      "      }" \
-      "    });" \
-      "  }" \
-      "" \
-      "  const observer = new MutationObserver(removeSubscriptionElements);" \
-      "  observer.observe(document.body, { childList: true, subtree: true });" \
-      "  removeSubscriptionElements();" \
-      "  setInterval(removeSubscriptionElements, 300);" \
-      "  setTimeout(() => {observer.disconnect();}, 10000);" \
-      "</script>" \
-      "" >> "$MOBILE_TPL"
+    sed -i '/<head>/r /dev/stdin' "$MOBILE_TPL" <<'HTML'
+  <script>
+    // NoMoreNagging
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const res = await nativeFetch(...args);
+      const path = new URL(String(args[0]?.url ?? args[0]), location.href).pathname;
+      if (!['/api2/json/nodes', '/api2/extjs/nodes'].includes(path)) return res;
+      const body = await res.clone().json().catch(() => null);
+      if (!Array.isArray(body?.data)) return res;
+      body.data.forEach((node) => { if (!node.level) node.level = 'NoMoreNagging'; });
+      return new Response(JSON.stringify(body), { status: res.status, headers: res.headers });
+    };
+  </script>
+HTML
 fi
 EOF
     chmod 755 /usr/local/bin/pve-remove-nag.sh
@@ -595,10 +595,13 @@ EOF
   no)
     whiptail --backtitle "Proxmox VE Helper Scripts" --msgbox --title "Support Subscriptions" "Supporting the software's development team is essential. Check their official website's Support Subscriptions for pricing. Without their dedicated work, we wouldn't have this exceptional software." 10 58
     msg_error "Selected no to Disabling subscription nag"
-    rm /etc/apt/apt.conf.d/no-nag-script 2>/dev/null
+    rm -f /etc/apt/apt.conf.d/no-nag-script /usr/local/bin/pve-remove-nag.sh
     ;;
   esac
   apt --reinstall install proxmox-widget-toolkit &>/dev/null || msg_error "Widget toolkit reinstall failed"
+  if dpkg -s pve-yew-mobile-gui &>/dev/null; then
+    apt --reinstall install pve-yew-mobile-gui &>/dev/null || msg_error "Mobile UI reinstall failed"
+  fi
   if ! systemctl is-active --quiet pve-ha-lrm; then
     CHOICE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "HIGH AVAILABILITY" --menu "Enable high availability?" 10 58 2 \
       "yes" " " \

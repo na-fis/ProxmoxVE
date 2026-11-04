@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Kristian Skov
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-9.0&tabs=linux-ubuntu
@@ -14,27 +14,25 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get update
-$STD apt-get install -y \
+apt_update_safe
+$STD apt install -y \
   ssh \
   software-properties-common
 
 $STD add-apt-repository -y ppa:dotnet/backports
-$STD apt-get install -y \
+$STD apt install -y \
   dotnet-sdk-9.0 \
   vsftpd \
   nginx
 msg_ok "Installed Dependencies"
 
-msg_info "Configure Application"
-var_project_name="default"
-read -r -p "${TAB3}Type the assembly name of the project: " var_project_name
-echo "Target assembly: '${var_project_name}'"
-msg_ok "Application Configured"
+var_project_name="${var_project_name:-}"
+[[ -n "$var_project_name" ]] || read -r -p "${TAB3}Type the assembly name of the project: " var_project_name || true
+[[ -n "$var_project_name" ]] || { msg_error "No assembly name given; set var_project_name or answer the prompt"; exit 64; }
 
 msg_info "Setting up FTP Server"
 useradd ftpuser
-FTP_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c13)
+FTP_PASS=$(random_password 13)
 usermod --password $(echo ${FTP_PASS} | openssl passwd -1 -stdin) ftpuser
 mkdir -p /var/www/html
 usermod -d /var/www/html ftp
@@ -46,11 +44,11 @@ sed -i "s|#chroot_local_user=YES|chroot_local_user=NO|g" /etc/vsftpd.conf
 
 systemctl restart -q vsftpd.service
 
-{
-  echo "FTP-Credentials"
-  echo "Username: ftpuser"
-  echo "Password: $FTP_PASS"
-} >>~/ftp.creds
+cat <<EOF >~/ftp.creds
+FTP-Credentials
+Username: ftpuser
+Password: $FTP_PASS
+EOF
 
 msg_ok "FTP server setup completed"
 

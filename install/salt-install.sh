@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: bvdberg01
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/saltstack/salt
@@ -29,7 +29,7 @@ Pin: version ${RELEASE}
 Pin-Priority: 1001
 EOF
 $STD apt install -y salt-master
-echo "${RELEASE}" >/~.salt
+echo "${RELEASE}" >~/.salt
 msg_ok "Installed Salt"
 
 motd_ssh

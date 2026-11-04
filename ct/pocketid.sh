@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
-# Copyright (c) 2021-2025 community-scripts ORG
+_cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
+source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
+# Copyright (c) 2021-2026 community-scripts ORG
 # Author: Snarkenfaugister
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/pocket-id/pocket-id
@@ -12,6 +13,7 @@ var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
+var_arm64="${var_arm64:-yes}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -27,6 +29,12 @@ function update_script() {
   if [[ ! -d /opt/pocket-id ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
+  fi
+
+  # Mandatory as of v2.x.x
+  ENCRYPTION_KEY=$(openssl rand -base64 32)
+  if ! grep -q '^ENCRYPTION_KEY=' /opt/pocket-id/.env; then
+    echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> /opt/pocket-id/.env
   fi
 
   if check_for_gh_release "pocket-id" "pocket-id/pocket-id"; then
@@ -64,7 +72,7 @@ function update_script() {
       cp /opt/pocket-id/.env /opt/env
     fi
 
-    fetch_and_deploy_gh_release "pocket-id" "pocket-id/pocket-id" "singlefile" "latest" "/opt/pocket-id/" "pocket-id-linux-amd64"
+    fetch_and_deploy_gh_release "pocket-id" "pocket-id/pocket-id" "singlefile" "latest" "/opt/pocket-id/" "pocket-id_linux_$(arch_resolve)"
     mv /opt/env /opt/pocket-id/.env
 
     msg_info "Starting Service"
@@ -79,8 +87,8 @@ start
 build_container
 description
 
-msg_ok "Completed Successfully!\n"
+msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Configure your reverse proxy to point to:${BGN} ${IP}:1411${CL}"
-echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}https://{PUBLIC_URL}/setup${CL}"
+echo -e "${INFO}${YW}Access it using the following URL:${CL}"
+echo -e "${GATEWAY}${BGN}https://{PUBLIC_URL}/setup${CL}"
