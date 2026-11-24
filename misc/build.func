@@ -49,8 +49,8 @@ variables() {
   BUILD_LOG="/tmp/create-lxc-${SESSION_ID}.log"     # Host-side container creation log
   CTTYPE="${CTTYPE:-${CT_TYPE:-1}}"
 
-  # Parse dev_mode early
-  parse_dev_mode
+  # Parse dev_mode early if defined
+  declare -f parse_dev_mode &>/dev/null && parse_dev_mode || true
 
   # Setup persistent log directory if logs mode active
   if [[ "${DEV_MODE_LOGS:-false}" == "true" ]]; then
@@ -85,6 +85,7 @@ source <(curl -fsSL "${_cs_core_url}/api/api.func" 2>/dev/null) 2>/dev/null || t
 
 if command -v curl >/dev/null 2>&1; then
   source <(curl -fsSL "${_cs_core_url}/core/core.func" 2>/dev/null) 2>/dev/null || true
+  source <(curl -fsSL "${_cs_core_url}/core/dev-mode.func" 2>/dev/null) 2>/dev/null || true
   source <(curl -fsSL "${_cs_core_url}/core/error_handler.func" 2>/dev/null) 2>/dev/null || true
   declare -f load_functions &>/dev/null && load_functions || true
   declare -f catch_errors &>/dev/null && catch_errors || true
