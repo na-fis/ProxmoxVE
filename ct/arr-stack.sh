@@ -22,6 +22,8 @@ declare -f msg_error >/dev/null 2>&1 || msg_error() { echo -e " \e[31m[ERROR]\e[
 
 # Custom stack is self-maintained in na-fis/ProxmoxVE fork
 runtime_script_status_guard() { return 0; }
+migrate_update_entrypoint() { return 0; }
+write_update_entrypoint() { return 0; }
 
 header_info "$APP"
 variables
