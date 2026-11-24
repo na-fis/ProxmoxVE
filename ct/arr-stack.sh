@@ -20,6 +20,9 @@ declare -f msg_info >/dev/null 2>&1 || msg_info() { echo -e " \e[34m[INFO]\e[0m 
 declare -f msg_ok >/dev/null 2>&1 || msg_ok() { echo -e " \e[32m[OK]\e[0m $*"; }
 declare -f msg_error >/dev/null 2>&1 || msg_error() { echo -e " \e[31m[ERROR]\e[0m $*"; }
 
+# Custom stack is self-maintained in na-fis/ProxmoxVE fork
+runtime_script_status_guard() { return 0; }
+
 header_info "$APP"
 variables
 color
