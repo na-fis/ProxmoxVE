@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1090
-source <(curl -fsSL "https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/build.func?t=$(date +%s)")
+_cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
+source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
 # Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
