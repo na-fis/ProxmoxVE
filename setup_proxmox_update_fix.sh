@@ -107,17 +107,17 @@ fi
 # 2. Define curl wrapper function
 curl() {
   local args=()
-  local is_github=false
+  local is_github_api=false
   local has_auth=false
   for arg in "$@"; do
-    if [[ "$arg" == *"github.com"* ]] || [[ "$arg" == *"githubusercontent.com"* ]]; then
-      is_github=true
+    if [[ "$arg" == *"api.github.com"* ]]; then
+      is_github_api=true
     fi
     if [[ "$arg" == *"Authorization:"* ]] || [[ "$arg" == *"authorization:"* ]]; then
       has_auth=true
     fi
   done
-  if [[ "$is_github" == "true" ]] && [[ "$has_auth" == "false" ]] && [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  if [[ "$is_github_api" == "true" ]] && [[ "$has_auth" == "false" ]] && [[ -n "${GITHUB_TOKEN:-}" ]]; then
     command curl -H "Authorization: Bearer $GITHUB_TOKEN" "$@"
   else
     command curl "$@"

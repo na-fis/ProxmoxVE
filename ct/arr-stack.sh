@@ -97,7 +97,7 @@ function update_script() {
 
             # Download release archive from GitHub releases (matching Radarr/Sonarr approach)
             temp_file="$(mktemp)"
-            if curl -fsSL "https://github.com/seerr-team/seerr/archive/refs/tags/v${RELEASE}.tar.gz" -o "$temp_file"; then
+            if command curl -fsSL "https://github.com/seerr-team/seerr/archive/refs/tags/v${RELEASE}.tar.gz" -o "$temp_file"; then
                 rm -rf /opt/seerr
                 mkdir -p /opt/seerr
                 $STD tar -xzf "$temp_file" --strip-components=1 -C /opt/seerr
