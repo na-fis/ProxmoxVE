@@ -76,65 +76,71 @@ function update_script() {
     
     # Update Seerr if installed
     if [[ -d /var/lib/seerr/ ]]; then
-        msg_info "Updating Seerr"
-        systemctl stop seerr.service
-
         # Get current version
         CURRENT_VERSION=""
         if [[ -f ~/.seerr ]]; then
             CURRENT_VERSION=$(cat ~/.seerr)
         fi
 
-        # Get latest release version
+        # Get latest release version from GitHub releases
         RELEASE=$(curl -fsSL https://api.github.com/repos/seerr-team/seerr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
 
-        if [[ "${RELEASE}" != "${CURRENT_VERSION}" ]] || [[ ! -f /opt/seerr/dist/index.js ]]; then
-            # Backup current installation if it exists
-            if [[ -d /opt/seerr ]]; then
+        if [[ -n "${RELEASE}" ]] && { [[ "${RELEASE}" != "${CURRENT_VERSION}" ]] || [[ ! -f /opt/seerr/dist/index.js ]] || [[ -d /opt/seerr/.git ]]; }; then
+            msg_info "Updating Seerr to v${RELEASE} (GitHub Release)"
+            systemctl stop seerr.service
+
+            # Backup current config if it exists in /opt/seerr
+            if [[ -d /opt/seerr/config ]]; then
                 rm -rf /opt/seerr_backup
-                cp -r /opt/seerr /opt/seerr_backup
+                cp -a /opt/seerr/config /opt/seerr_backup
             fi
 
-            # Download and install latest code from develop branch
-            cd /opt || exit
-            rm -rf /opt/seerr
-            msg_info "Cloning Seerr develop branch"
-            $STD git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
-            cd /opt/seerr || exit
-            
-            msg_info "Ensuring correct Node.js version is installed"
-            $STD apt-get update
-            $STD apt-get install -y --only-upgrade nodejs
-            source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/tools.func)
-            NODE_VERSION="22" NODE_MODULE="pnpm@latest" setup_nodejs
-            
-            cd /opt/seerr || exit
-            
-            msg_info "Building Seerr (Patience)"
-            $STD env CYPRESS_INSTALL_BINARY=0 pnpm install
-            $STD pnpm build
+            # Download release archive from GitHub releases (matching Radarr/Sonarr approach)
+            temp_file="$(mktemp)"
+            if curl -fsSL "https://github.com/seerr-team/seerr/archive/refs/tags/v${RELEASE}.tar.gz" -o "$temp_file"; then
+                rm -rf /opt/seerr
+                mkdir -p /opt/seerr
+                $STD tar -xzf "$temp_file" --strip-components=1 -C /opt/seerr
+                rm -rf "$temp_file"
 
-            # Save version
-            echo "${RELEASE}" > ~/.seerr
-            msg_ok "Updated Seerr to latest (v${RELEASE})"
+                if [[ -d /opt/seerr_backup ]]; then
+                    cp -a /opt/seerr_backup /opt/seerr/config
+                    rm -rf /opt/seerr_backup
+                fi
+
+                cd /opt/seerr || exit
+
+                # Ensure pnpm is present
+                if ! command -v pnpm &>/dev/null; then
+                    msg_info "Ensuring pnpm is installed"
+                    $STD npm install -g pnpm@latest
+                fi
+
+                msg_info "Building Seerr v${RELEASE} (Patience)"
+                export CYPRESS_INSTALL_BINARY=0
+                export NODE_OPTIONS="--max-old-space-size=3072"
+                $STD pnpm install --frozen-lockfile
+                $STD pnpm build
+
+                # Save version stamp
+                echo "${RELEASE}" > ~/.seerr
+                msg_ok "Updated Seerr to v${RELEASE}"
+            else
+                rm -rf "$temp_file"
+                msg_error "Failed to download Seerr release v${RELEASE}"
+            fi
+
+            # Patch service file if it is using yarn, pnpm or invalid path
+            if grep -qE "yarn start|ExecStart= start|pnpm start" /etc/systemd/system/seerr.service 2>/dev/null; then
+                msg_info "Patching service file to execute node directly"
+                sed -i "s|ExecStart=.*|ExecStart=/usr/bin/node /opt/seerr/dist/index.js|g" /etc/systemd/system/seerr.service
+                systemctl daemon-reload
+            fi
+
+            systemctl start seerr.service
         else
             msg_ok "Seerr is already up to date (v${RELEASE})"
         fi
-
-        # Ensure pnpm is present and service is correctly patched
-        if ! command -v pnpm &>/dev/null; then
-            msg_info "Ensuring pnpm is installed"
-            $STD npm install -g pnpm@latest
-        fi
-        
-        # Patch service file if it is using yarn, pnpm or invalid path
-        if grep -qE "yarn start|ExecStart= start|pnpm start" /etc/systemd/system/seerr.service; then
-            msg_info "Patching service file to execute node directly"
-            sed -i "s|ExecStart=.*|ExecStart=/usr/bin/node /opt/seerr/dist/index.js|g" /etc/systemd/system/seerr.service
-            systemctl daemon-reload
-        fi
-
-        systemctl start seerr.service
     fi
 
     # Update or Install Agregarr

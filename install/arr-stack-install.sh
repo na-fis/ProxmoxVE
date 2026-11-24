@@ -15,11 +15,7 @@ update_os
 
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
-    sqlite3
-    msg_info "Installing pnpm"
-    $STD npm install -g pnpm@latest
-fi
-$STD apt-get install -y \
+    sqlite3 \
     git \
     build-essential
 msg_ok "Installed Dependencies"
@@ -49,14 +45,22 @@ chmod 775 /opt/Radarr
 rm -rf "$temp_file"
 msg_ok "Installed Radarr"
 
-msg_info "Cloning and Building Seerr (Patience)"
+msg_info "Installing Seerr (GitHub Release)"
 mkdir -p /var/lib/seerr/
 chmod 775 /var/lib/seerr/
-git clone -b develop https://github.com/seerr-team/seerr.git /opt/seerr
+RELEASE=$(curl -fsSL https://api.github.com/repos/seerr-team/seerr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
+temp_file="$(mktemp)"
+curl -fsSL "https://github.com/seerr-team/seerr/archive/refs/tags/v${RELEASE}.tar.gz" -o "$temp_file"
+mkdir -p /opt/seerr
+tar -xzf "$temp_file" --strip-components=1 -C /opt/seerr
+rm -rf "$temp_file"
 cd /opt/seerr || exit
-$STD pnpm install
+export CYPRESS_INSTALL_BINARY=0
+export NODE_OPTIONS="--max-old-space-size=3072"
+$STD pnpm install --frozen-lockfile
 $STD pnpm build
-msg_ok "Installed Seerr"
+echo "${RELEASE}" > ~/.seerr
+msg_ok "Installed Seerr (v${RELEASE})"
 
 # shellcheck disable=SC1090
 source <(curl -s https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/install/agregarr-install.sh)
