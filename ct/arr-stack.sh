@@ -8,12 +8,17 @@ source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc
 
 APP="Arr-Stack"
 var_tags="${var_tags:-arr,media}"
-var_cpu="${var_cpu:-4}"
+var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-16}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
+
+# Fallback messaging helpers in case core.func is not loaded
+declare -f msg_info >/dev/null 2>&1 || msg_info() { echo -e " \e[34m[INFO]\e[0m $*"; }
+declare -f msg_ok >/dev/null 2>&1 || msg_ok() { echo -e " \e[32m[OK]\e[0m $*"; }
+declare -f msg_error >/dev/null 2>&1 || msg_error() { echo -e " \e[31m[ERROR]\e[0m $*"; }
 
 header_info "$APP"
 variables

@@ -80,19 +80,25 @@ variables() {
   fi
 }
 
-source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/api.func)
+_cs_core_url="https://raw.githubusercontent.com/community-scripts/core/main"
+source <(curl -fsSL "${_cs_core_url}/api/api.func" 2>/dev/null) 2>/dev/null || true
 
 if command -v curl >/dev/null 2>&1; then
-  source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/core.func)
-  source <(curl -fsSL https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/error_handler.func)
-  load_functions
-  catch_errors
+  source <(curl -fsSL "${_cs_core_url}/core/core.func" 2>/dev/null) 2>/dev/null || true
+  source <(curl -fsSL "${_cs_core_url}/core/error_handler.func" 2>/dev/null) 2>/dev/null || true
+  declare -f load_functions &>/dev/null && load_functions || true
+  declare -f catch_errors &>/dev/null && catch_errors || true
 elif command -v wget >/dev/null 2>&1; then
-  source <(wget -qO- https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/core.func)
-  source <(wget -qO- https://raw.githubusercontent.com/na-fis/ProxmoxVE/main/misc/error_handler.func)
-  load_functions
-  catch_errors
+  source <(wget -qO- "${_cs_core_url}/core/core.func" 2>/dev/null) 2>/dev/null || true
+  source <(wget -qO- "${_cs_core_url}/core/error_handler.func" 2>/dev/null) 2>/dev/null || true
+  declare -f load_functions &>/dev/null && load_functions || true
+  declare -f catch_errors &>/dev/null && catch_errors || true
 fi
+
+# Fallback messaging helpers
+declare -f msg_info >/dev/null 2>&1 || msg_info() { echo -e " \e[34m[INFO]\e[0m $*"; }
+declare -f msg_ok >/dev/null 2>&1 || msg_ok() { echo -e " \e[32m[OK]\e[0m $*"; }
+declare -f msg_error >/dev/null 2>&1 || msg_error() { echo -e " \e[31m[ERROR]\e[0m $*"; }
 
 # ==============================================================================
 # SECTION 2: PRE-FLIGHT CHECKS & SYSTEM VALIDATION
@@ -2409,12 +2415,16 @@ check_container_resources() {
   current_cpu=$(nproc)
 
   if [[ "$current_ram" -lt "$var_ram" ]] || [[ "$current_cpu" -lt "$var_cpu" ]]; then
-    echo -e "\n${INFO}${HOLD} ${GN}Required: ${var_cpu} CPU, ${var_ram}MB RAM ${CL}| ${RD}Current: ${current_cpu} CPU, ${current_ram}MB RAM${CL}"
-    echo -e "${YWB}Please ensure that the ${APP} LXC is configured with at least ${var_cpu} vCPU and ${var_ram} MB RAM for the build process.${CL}\n"
-    echo -ne "${INFO}${HOLD} May cause data loss! ${INFO} Continue update with under-provisioned LXC? <yes/No>  "
+    echo -e "\n${INFO:-}${HOLD:-} ${GN:-}Required: ${var_cpu} CPU, ${var_ram}MB RAM ${CL:-}| ${RD:-}Current: ${current_cpu} CPU, ${current_ram}MB RAM${CL:-}"
+    echo -e "${YWB:-}Please ensure that the ${APP} LXC is configured with at least ${var_cpu} vCPU and ${var_ram} MB RAM for the build process.${CL:-}\n"
+    if [[ "${PHS_SILENT:-0}" == "1" ]]; then
+      echo -e "${INFO:-} Silent mode active: proceeding with current resources."
+      return 0
+    fi
+    echo -ne "${INFO:-}${HOLD:-} May cause data loss! ${INFO:-} Continue update with under-provisioned LXC? <yes/No>  "
     read -r prompt
     if [[ ! ${prompt,,} =~ ^(yes)$ ]]; then
-      echo -e "${CROSS}${HOLD} ${YWB}Exiting based on user input.${CL}"
+      echo -e "${CROSS:-}${HOLD:-} ${YWB:-}Exiting based on user input.${CL:-}"
       exit 1
     fi
   else
@@ -2433,7 +2443,10 @@ check_container_storage() {
   local used_size=$(df /boot --output=used | tail -n 1)
   usage=$((100 * used_size / total_size))
   if ((usage > 80)); then
-    echo -e "${INFO}${HOLD} ${YWB}Warning: Storage is dangerously low (${usage}%).${CL}"
+    echo -e "${INFO:-}${HOLD:-} ${YWB:-}Warning: Storage is dangerously low (${usage}%).${CL:-}"
+    if [[ "${PHS_SILENT:-0}" == "1" ]]; then
+      return 0
+    fi
     echo -ne "Continue anyway? <y/N>  "
     read -r prompt
     if [[ ! ${prompt,,} =~ ^(y|yes)$ ]]; then
