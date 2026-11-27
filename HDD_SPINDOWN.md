@@ -44,23 +44,24 @@ Debian's `/usr/lib/udev/hdparm` -> `95hdparm-apm` (`hdparm_try_apm`) silently sk
 
 ---
 
-### C. Enclosure Sleep & Fan Shut-Off (UAS Quirk + Auto-Suspend)
-Connecting DAS enclosures via USB to Linux hosts introduces link power-management issues. When the USB connection tries to sleep, UAS (USB Attached SCSI) protocol bugs inside the ASMedia chip of the TDAS trigger USB connection resets and device letter renames.
+### C. Enclosure Link Stability (UAS Quirk + USB Autosuspend Disabled)
+Connecting DAS enclosures via USB to Linux hosts introduces link power-management issues. Even with `uas` disabled, kernel USB/SCSI runtime autosuspend (`power/control=auto`) on the ASMedia `174c:235c` TDAS bridges caused a USB disconnect (`sdb` -> `sdd` re-enumeration and `exFAT` read-only/I/O errors in Plex) when resuming from USB sleep under a concurrent write + platter spin-up.
 
-To enable the enclosure fan to turn off safely during idle times:
+To ensure zero disconnects while still letting drives spin down safely via `hd-idle`:
 1. **Disabled UAS (UAS Quirk):**
-   Created `/etc/modprobe.d/tdas-quirks.conf` to force the device to use the older, extremely stable `usb-storage` driver instead of `uas`. This enables stable ATA standby translation:
+   Created `/etc/modprobe.d/tdas-quirks.conf` to force the device to use the stable `usb-storage` driver instead of `uas`. This enables stable SAT ATA standby translation:
    ```text
    options usb-storage quirks=174c:235c:u
    ```
-2. **Re-enabled USB Auto-Suspend with a 60-Minute Timeout (Strictly > `hd-idle`):**
-   Configured `/etc/udev/rules.d/50-tdas-spindown.rules` to auto-suspend the USB link and SCSI block devices **60 minutes (3600s)** after inactivity, ensuring platters are already cleanly in `STANDBY` (at 45 min) before the USB bridge suspends:
+2. **Disabled USB & SCSI Autosuspend (`/etc/udev/rules.d/50-tdas-spindown.rules`):**
+   Forced `power/control="on"` on the Realtek USB 3.2 hub (`0bda:0423`), the ASMedia bridges (`174c:235c`), and the `TerraMas` SCSI devices so USB links never drop while drives enter ATA `STANDBY` via `hd-idle`:
    ```text
-   # Enable USB auto-suspend for the TerraMaster TDAS USB enclosure device (60-minute timeout, strictly > 45m hd-idle)
-   ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="174c", ATTR{idProduct}=="235c", ATTR{power/control}="auto", ATTR{power/autosuspend}="3600"
-
-   # Enable block-level SCSI device auto-suspend for the disks inside the TDAS enclosure (60-minute timeout)
-   ACTION=="add|change", SUBSYSTEM=="scsi", DRIVERS=="sd", ATTRS{vendor}=="TerraMas", ATTR{power/control}="auto", ATTR{power/autosuspend_delay_ms}="3600000"
+   # Keep USB and SCSI link power always ON for the TerraMaster TDAS enclosure (174c:235c).
+   # USB autosuspend causes ASMedia bridges to drop off the USB bus on spinup writes (USB disconnect).
+   # Disk platter spindown is safely handled at the SATA layer by hd-idle (-c ata).
+   ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="174c", ATTR{idProduct}=="235c", ATTR{power/control}="on"
+   ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="0423", ATTR{power/control}="on"
+   ACTION=="add|change", SUBSYSTEM=="scsi", DRIVERS=="sd", ATTRS{vendor}=="TerraMas", ATTR{power/control}="on"
    ```
 3. **Media Stack & Batch Schedule Alignment:**
    - **Sonarr & Radarr (LXC 102):** `rescanAfterRefresh` set to `afterManual` (avoids 12h/24h full-directory tree walks across `sdb` and `sdc`).
